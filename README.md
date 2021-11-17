@@ -55,8 +55,8 @@ Each of the other config file locations can be changed within this file as well.
 
 Example: You can change the playlist file by changing PlaylistFile like this:
 
-`[Playlists]
-PlaylistFile = D:\MyMusicFolder\MyPlaylist.m3u`
+`[Playlists]`
+`PlaylistFile = D:\MyMusicFolder\MyPlaylist.m3u`
 
 If you wish to restart the first time setup, set `InstallerCompleted` to 0 (and optionally rename/remove the InteractiveMusic folder).
 
