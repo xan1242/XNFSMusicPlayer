@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31112.23
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XNFSMusicPlayer", "XNFSMusicPlayer\XNFSMusicPlayer.vcxproj", "{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug-Carbon|x86 = Debug-Carbon|x86
+		Debug-MW|x86 = Debug-MW|x86
+		Release-Carbon|x86 = Release-Carbon|x86
+		Release-MW|x86 = Release-MW|x86
+		Release-Testing-Carbon|x86 = Release-Testing-Carbon|x86
+		Release-Testing-MW|x86 = Release-Testing-MW|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}.Debug-Carbon|x86.ActiveCfg = Debug-Carbon|Win32
+		{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}.Debug-Carbon|x86.Build.0 = Debug-Carbon|Win32
+		{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}.Debug-MW|x86.ActiveCfg = Debug|Win32
+		{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}.Debug-MW|x86.Build.0 = Debug|Win32
+		{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}.Release-Carbon|x86.ActiveCfg = Release-Carbon|Win32
+		{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}.Release-Carbon|x86.Build.0 = Release-Carbon|Win32
+		{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}.Release-MW|x86.ActiveCfg = Release|Win32
+		{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}.Release-MW|x86.Build.0 = Release|Win32
+		{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}.Release-Testing-Carbon|x86.ActiveCfg = Release-Testing-Carbon|Win32
+		{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}.Release-Testing-Carbon|x86.Build.0 = Release-Testing-Carbon|Win32
+		{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}.Release-Testing-MW|x86.ActiveCfg = Release-Testing|Win32
+		{1CB00E88-6663-4145-ABCD-85FA3C0B1EE4}.Release-Testing-MW|x86.Build.0 = Release-Testing|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {513CBDE5-B73A-4FCE-A782-63CC851E55ED}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\includes">
+      <UniqueIdentifier>{cc868cbb-3c9d-48a8-851b-6786a5a5a89c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\includes\injector">
+      <UniqueIdentifier>{eb090e69-d9df-436c-a04e-242fcd87e07b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BASS">
+      <UniqueIdentifier>{3abe318c-b264-4416-b74b-7428ff426ef8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BASS\c">
+      <UniqueIdentifier>{b206aeee-d08f-477a-a9b3-f7147ea8553c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BASSFLAC">
+      <UniqueIdentifier>{3bb4c1dd-c017-44dc-b886-eb62ac43d8dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BASSFLAC\c">
+      <UniqueIdentifier>{fdb48c8d-99d5-459b-976a-52df07252739}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BASSMIDI">
+      <UniqueIdentifier>{f6b309f2-f07f-4eda-b60f-ebf011fd885e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BASSMIDI\c">
+      <UniqueIdentifier>{fd36656f-91e7-45ca-b7eb-09fca56d48b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\sflist">
+      <UniqueIdentifier>{5bfb60a1-04ce-4b50-bb9e-9be697f54dfa}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\includes\IniReader.h">
+      <Filter>Header Files\includes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\includes\injector\injector.hpp">
+      <Filter>Header Files\includes\injector</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BASS\c\bass.h">
+      <Filter>Header Files\BASS\c</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BASSFLAC\c\bassflac.h">
+      <Filter>Header Files\BASSFLAC\c</Filter>
+    </ClInclude>
+    <ClInclude Include="XNFSMusicPlayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BASSMIDI\c\bassmidi.h">
+      <Filter>Header Files\BASSMIDI\c</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sflist\sflist.h">
+      <Filter>Header Files\sflist</Filter>
+    </ClInclude>
+    <ClInclude Include="MW_MusicAddresses.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Carbon_MusicAddresses.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XNFSMusicPlayer_Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XNFSMusicPlayer_MW.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XNFSMusicPlayer_Carbon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XNFSMusicPlayer_TagReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XNFSMusicPlayer_StreamPusher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
