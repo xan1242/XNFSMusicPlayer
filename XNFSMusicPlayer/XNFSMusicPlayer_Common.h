@@ -234,7 +234,7 @@ unsigned int CheckIfSupportedFile(const char* filename)
 				else
 #endif
 				{
-					if (strcmp(point, ".ogg") == 0 || strcmp(point, ".OGG") == 0)
+					if (strcmp(point, ".ogg") == 0 || strcmp(point, ".OGG") == 0 || strcmp(point, ".logg") == 0 || strcmp(point, ".LOGG") == 0)
 						return FILE_TYPE_OGG;
 					else
 						return FILE_TYPE_STREAM;

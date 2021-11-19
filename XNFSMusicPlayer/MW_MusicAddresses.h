@@ -65,3 +65,10 @@
 #define PATHFINDER_THING_ADDRESS 0x9C2964
 #define SOUNDLOSTWINFOCUS_ADDRESS 0x982C50
 #define THEGAMEFLOWMANAGER_ADDRESS 0x00925E90
+
+// RNG fixer - random mode isn't quite random...
+#define MW_RNGFIX_ADDRESS 0x004F4F02
+#define BGETTICKER_ADDRESS 0x0045CE40
+
+// allow for track changing everywhere, not just in FE
+#define TRACKCHANGE_NOP_ADDR 0x005170CF

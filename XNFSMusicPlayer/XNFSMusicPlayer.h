@@ -18,7 +18,7 @@
 #endif
 
 #define BUILD_VER_MAJOR 1
-#define BUILD_VER_MINOR 8
+#define BUILD_VER_MINOR 9
 
 #define FILE_TYPE_TRACKER 1
 #define FILE_TYPE_STREAM 2
@@ -127,10 +127,10 @@ const char SupportedTrackerFormats[14][5] =
 	{ ".XM" },{ ".MO3" },{ ".MOD" },{ ".S3M" },{ ".IT" },{ ".MTM" },{ ".UMX" }
 };
 
-const char SupportedStreamingFormats[14][6] =
+const char SupportedStreamingFormats[18][6] =
 {
-	{ ".ogg" },{ ".mp3" },{ ".wav" },{ ".flac" },{ ".mp2" },{ ".mp1" },{ ".aiff" },
-	{ ".OGG" },{ ".MP3" },{ ".WAV" },{ ".FLAC" },{ ".MP2" },{ ".MP1" },{ ".AIFF" }
+	{ ".ogg" },{ ".mp3" },{ ".wav" },{ ".flac" },{ ".mp2" },{ ".mp1" },{ ".aiff" }, { ".logg" }, { ".lwav" },
+	{ ".OGG" },{ ".MP3" },{ ".WAV" },{ ".FLAC" },{ ".MP2" },{ ".MP1" },{ ".AIFF" }, { ".LOGG" }, { ".LWAV" }
 };
 
 /*const char SupportedVGMStreamFormats[][8] = // Not all play properly (looped ones play infinitely)

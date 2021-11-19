@@ -5,6 +5,7 @@
 #include "XNFSMusicPlayer_Common.h"
 
 int(__cdecl *NotifyChyron)(const char* TrackTitle, const char* TrackAlbum, const char* TrackArtist) = (int(__cdecl*)(const char*, const char*, const char*))NOTIFYCHYRON_ADDRESS;
+unsigned int(__cdecl* bGetTicker)() = (unsigned int(__cdecl*)())BGETTICKER_ADDRESS;
 
 #define DEFAULT_NODEPATHS_PATH "scripts\\XNFSMusicPlayer\\NodePaths.txt"
 #define MAXNODES 3258
@@ -42,6 +43,12 @@ JukeboxTrack *EATrax;
 SaveGameTrax *SaveData;
 JukeboxTrack** EATraxPointers;
 unsigned int SaveDataPointer;
+
+unsigned int __stdcall bRandom_Custom(int range)
+{
+	srand(bGetTicker());
+	return rand() % range;
+}
 
 void __stdcall WriteModeToIni(unsigned int TrackNum, char* Mode)
 {
@@ -154,7 +161,8 @@ void __declspec(naked) NotifyChyronCave()
 
 int HotkeyUpdate()
 {
-	if ((*(unsigned int*)THEGAMEFLOWMANAGER_ADDRESS == 3) || (*(unsigned int*)THEGAMEFLOWMANAGER_ADDRESS == 6))
+	// handled through ingame actions...
+	/*if ((*(unsigned int*)THEGAMEFLOWMANAGER_ADDRESS == 3) || (*(unsigned int*)THEGAMEFLOWMANAGER_ADDRESS == 6))
 	{
 		if (!bInteractiveMode && !*(bool*)SOUNDLOSTWINFOCUS_ADDRESS && bInstallerComplete)
 		{
@@ -164,7 +172,7 @@ int HotkeyUpdate()
 				while ((GetAsyncKeyState(hkTrackSwitch) & 0x8000) > 0) { Sleep(0); }
 			}
 		}
-	}
+	}*/
 	return 0;
 }
 
@@ -424,6 +432,12 @@ int InjectCode()
 	injector::MakeCALL(PATHFINDERDESTRUCTOR_ADDRESS, BASSDestroy, true);
 
 	injector::MakeJMP(0x00462ACF, vsprintfdamnit, true);
+
+	// RNG fix
+	injector::MakeCALL(MW_RNGFIX_ADDRESS, bRandom_Custom, true);
+
+	// track change fix
+	injector::MakeNOP(TRACKCHANGE_NOP_ADDR, 2, true);
 
 	XNFS_printf(1, "%s: Code injection complete.\n", PRINT_TYPE_INFO);
 
