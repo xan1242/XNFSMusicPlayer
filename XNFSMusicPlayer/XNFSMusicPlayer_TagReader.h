@@ -4,6 +4,16 @@
 #include "bass.h"
 #include "XNFSMusicPlayer.h"
 
+#define CHUNKID_RIFF_INFO 0x4F464E49
+#define CHUNKID_RIFF_LIST 0x5453494C
+#define CHUNKID_RIFF_INAM 0x4D414E49
+#define CHUNKID_RIFF_TITL 0x4C544954
+#define CHUNKID_RIFF_IPRD 0x44525049
+#define CHUNKID_RIFF_IART 0x54524149
+#define CHUNKID_RIFF_ID3 0x20336469
+#define CHUNKID_RIFF_RIFF 0x46464952
+#define CHUNKID_ID3 0x03334449
+
 void ReadFilenameAsTrackName(const char* FilePath, int TrackNumber, JukeboxTrack* EATrax)
 {
 	char JukeStuff[255];
@@ -65,13 +75,14 @@ void ReadTrackNumberAsArtist(const char* FilePath, int TrackNumber, JukeboxTrack
 	strcpy(EATrax[TrackNumber].TrackArtist, JukeStuff);
 }
 
-bool ReadEATraxTags_RIFFInfo(const char* FilePath, int TrackNumber, JukeboxTrack* EATrax, DWORD music)
+bool ReadEATraxTags_RIFFInfo(const char* FilePath, int TrackNumber, JukeboxTrack* EATrax)
 {
 	char PathBuffer[1024]; // try to make a function out of this later
 	strcpy(PathBuffer, FilePath);
 	FILE *fin = fopen(PathBuffer, "rb");
 	if (fin == NULL)
 	{
+		XNFS_printf(1, "%s: Couldn't open %s\n", PRINT_TYPE_ERROR, PathBuffer);
 		strcpy(PathBuffer, "..\\");
 		strcat(PathBuffer, FilePath);
 		fin = fopen(PathBuffer, "rb");
@@ -82,62 +93,82 @@ bool ReadEATraxTags_RIFFInfo(const char* FilePath, int TrackNumber, JukeboxTrack
 		XNFS_printf(1, "%s: Couldn't open %s\n", PRINT_TYPE_ERROR, PathBuffer);
 		return 0;
 	}
-	fclose(fin);
-
-	const char* riffinfo = NULL;
-	const char* BlockChar = NULL;
 
 	bool bFoundTitle = 0;
 	bool bFoundAlbum = 0;
 	bool bFoundArtist = 0;
+	bool bFoundList = 0;
 
-	unsigned int TagSize = 0;
+	unsigned int ChunkSize = 0;
+	unsigned int ChunkID = 0;
+	unsigned int FileSize = 0;
+	unsigned int ListPos = 0;
+	unsigned int RelativeChunkEnd = 0;
+	
+	// first we find the "LIST" chunk - we do that by skipping chunks until we find it...
+	fseek(fin, 4, SEEK_SET);
+	fread(&FileSize, sizeof(int), 1, fin);
+	FileSize += 8;
+	// skip header info
+	fseek(fin, 8, SEEK_CUR);
+	fread(&ChunkSize, sizeof(int), 1, fin);
+	fseek(fin, ChunkSize, SEEK_CUR);
 
-	music = BASS_StreamCreateFile(0, PathBuffer, 0, 0, BASS_STREAM_DECODE);
-	riffinfo = BASS_ChannelGetTags(music, BASS_TAG_RIFF_INFO);
-
-	if (!riffinfo)
-		return 0;
-
-	while (*(unsigned char*)riffinfo)
+	// start searching chunks
+	while (ftell(fin) < FileSize)
 	{
-		BlockChar = riffinfo;
-		if (((strncmp("INAM=", BlockChar, 5) == 0) || (strncmp("TITL=", BlockChar, 5) == 0)) && (!bFoundTitle || !EATrax[TrackNumber].TrackName))
+		fread(&ChunkID, sizeof(int), 1, fin);
+		fread(&ChunkSize, sizeof(int), 1, fin);
+		if (ChunkID == CHUNKID_RIFF_LIST)
 		{
-			bFoundTitle = 1;
-			BlockChar += 5;
-			TagSize = strlen(BlockChar) + 1;
-			EATrax[TrackNumber].TrackName = (char*)malloc(TagSize);
-			strcpy(EATrax[TrackNumber].TrackName, BlockChar);
-			riffinfo = BlockChar + TagSize;
+			bFoundList = true;
+			break;
 		}
-		else if ((strncmp("IPRD=", BlockChar, 5) == 0) && (!bFoundAlbum || !EATrax[TrackNumber].TrackAlbum))
+		fseek(fin, ChunkSize, SEEK_CUR);
+	}
+
+	if (ftell(fin) < FileSize)
+	{
+		RelativeChunkEnd = ftell(fin) + ChunkSize;
+		while (ftell(fin) < RelativeChunkEnd)
 		{
-			bFoundAlbum = 1;
-			BlockChar += 5;
-			TagSize = strlen(BlockChar) + 1;
-			EATrax[TrackNumber].TrackAlbum = (char*)malloc(TagSize);
-			strcpy(EATrax[TrackNumber].TrackAlbum, BlockChar);
-			riffinfo = BlockChar + TagSize;
-		}
-		else if ((strncmp("IART=", BlockChar, 5) == 0) && (!bFoundArtist || !EATrax[TrackNumber].TrackArtist))
-		{
-			bFoundArtist = 1;
-			BlockChar += 5;
-			TagSize = strlen(BlockChar) + 1;
-			EATrax[TrackNumber].TrackArtist = (char*)malloc(TagSize);
-			strcpy(EATrax[TrackNumber].TrackArtist, BlockChar);
-			riffinfo = BlockChar + TagSize;
-		}
-		else
-		{
-			BlockChar += 5;
-			TagSize = strlen(BlockChar) + 1;
-			riffinfo = BlockChar + TagSize;
+			fread(&ChunkID, sizeof(int), 1, fin);
+			if (ChunkID != CHUNKID_RIFF_INFO)
+			{
+				fread(&ChunkSize, sizeof(int), 1, fin);
+
+				if ((ChunkID == CHUNKID_RIFF_INAM) || (ChunkID == CHUNKID_RIFF_TITL) && (!bFoundTitle || !EATrax[TrackNumber].TrackName))
+				{
+					bFoundTitle = 1;
+					EATrax[TrackNumber].TrackName = (char*)malloc(ChunkSize);
+					fread(EATrax[TrackNumber].TrackName, ChunkSize, 1, fin);
+				}
+				else if ((ChunkID == CHUNKID_RIFF_IPRD) && (!bFoundAlbum || !EATrax[TrackNumber].TrackAlbum))
+				{
+					bFoundAlbum = 1;
+					EATrax[TrackNumber].TrackAlbum = (char*)malloc(ChunkSize);
+					fread(EATrax[TrackNumber].TrackAlbum, ChunkSize, 1, fin);
+				}
+				else if ((ChunkID == CHUNKID_RIFF_IART) && (!bFoundArtist || !EATrax[TrackNumber].TrackArtist))
+				{
+					bFoundArtist = 1;
+					EATrax[TrackNumber].TrackArtist = (char*)malloc(ChunkSize);
+					fread(EATrax[TrackNumber].TrackArtist, ChunkSize, 1, fin);
+				}
+				else
+					fseek(fin, ChunkSize, SEEK_CUR);
+
+				if (bFoundTitle && bFoundAlbum && bFoundArtist)
+					break;
+			}
+			if (bFoundTitle && bFoundAlbum && bFoundArtist)
+				break;
 		}
 	}
 
-	if (!bFoundTitle || !bFoundAlbum || !bFoundArtist)
+	fclose(fin);
+
+	if ((!bFoundTitle || !bFoundAlbum || !bFoundArtist) && bFoundList)
 	{
 		if (!bFoundTitle && !EATrax[TrackNumber].TrackName)
 			ReadFilenameAsTrackName(FilePath, TrackNumber, EATrax);
@@ -147,9 +178,7 @@ bool ReadEATraxTags_RIFFInfo(const char* FilePath, int TrackNumber, JukeboxTrack
 			ReadTrackNumberAsArtist(FilePath, TrackNumber, EATrax);
 	}
 
-	BASS_StreamFree(music);
-
-	return 1;
+	return bFoundList;
 }
 
 bool ReadVorbisComments(FILE* finput, int TrackNumber, const char* FilePath, JukeboxTrack* EATrax, TrackStruct* track)
@@ -237,23 +266,6 @@ bool ReadVorbisComments(FILE* finput, int TrackNumber, const char* FilePath, Juk
 				}
 			}
 		}
-
-		/*if (strncmp(ReadComment, "ALBUMARTIST", 0xB) == 0)
-		{
-		bFoundAlbumArtist = 1;
-		if ((strcmp(pch1 + 1, "") == 0) || (strcmp(pch1 + 1, "\0") == 0))
-		{
-		bFoundAlbumArtist = 0;
-		}
-		else
-		{
-		bFoundAlbumArtist = 1;
-		EATrax[TrackNumber].TrackArtist = (char*)malloc(strlen(pch1 + 1));
-		strcpy(EATrax[TrackNumber].TrackArtist, pch1 + 1);
-		if ((strcmp(EATrax[TrackNumber].TrackArtist, "") == 0) || (strncmp(EATrax[TrackNumber].TrackArtist, "\0", 1) == 0))
-		bFoundAlbumArtist = 0;
-		}
-		}*/
 
 		if ((strncmp(ReadComment, "LOOPSTART", 0x9) == 0) && !bFoundOneAlready)
 		{
@@ -385,7 +397,7 @@ bool ReadEATraxTags_FLAC(const char* FilePath, int TrackNumber, JukeboxTrack* EA
 	return ret;
 }
 
-bool __stdcall ReadEATraxTags_Module(const char* FilePath, int TrackNumber, JukeboxTrack* EATrax, DWORD music)
+/*bool __stdcall ReadEATraxTags_Module(const char* FilePath, int TrackNumber, JukeboxTrack* EATrax, DWORD music)
 {
 	char PathBuffer[1024];
 	char* TheBassTag = 0;
@@ -433,9 +445,9 @@ bool __stdcall ReadEATraxTags_Module(const char* FilePath, int TrackNumber, Juke
 
 	BASS_MusicFree(music);
 	return 1;
-}
+}*/
 
-void ID3v1TrackArtistReading(TAG_ID3* id3, const char* FilePath, int TrackNumber, JukeboxTrack* EATrax)
+/*void ID3v1TrackArtistReading(TAG_ID3* id3, const char* FilePath, int TrackNumber, JukeboxTrack* EATrax)
 {
 	EATrax[TrackNumber].TrackArtist = (char*)malloc(30);
 	strcpy(EATrax[TrackNumber].TrackArtist, id3->artist);
@@ -466,7 +478,7 @@ void ID3v1TrackNameReading(TAG_ID3* id3, const char* FilePath, int TrackNumber, 
 		free(EATrax[TrackNumber].TrackName);
 		ReadFilenameAsTrackName(FilePath, TrackNumber, EATrax);
 	}
-}
+}*/
 
 void ConvertWideToMultiByteTag(const char* CurrentBlock, unsigned int &FrameSize, char* TheTagString)
 {
@@ -480,9 +492,10 @@ void ConvertWideToMultiByteTag(const char* CurrentBlock, unsigned int &FrameSize
 	free(WideString);
 }
 
-bool ReadEATraxTags_ID3v2(const char* FilePath, int TrackNumber, JukeboxTrack* EATrax, DWORD music)
+bool ReadEATraxTags_ID3v2(const char* FilePath, int TrackNumber, JukeboxTrack* EATrax)
 {
 	const char* id3v2 = NULL;
+	const char id3v2_temp[10] = { 0 };
 
 	unsigned int ID3Magic = 0;
 	unsigned int ReadFrame = 0;
@@ -494,9 +507,11 @@ bool ReadEATraxTags_ID3v2(const char* FilePath, int TrackNumber, JukeboxTrack* E
 	bool bFoundAlbum = 0;
 	bool bFoundArtist = 0;
 
-	bool ret = 0;
-
 	const char *CurrentBlock, *EndPointer = NULL;
+
+	unsigned int ChunkSize = 0;
+	unsigned int ChunkID = 0;
+	unsigned int FileSize = 0;
 
 	char PathBuffer[1024];
 	strcpy(PathBuffer, FilePath);
@@ -514,17 +529,60 @@ bool ReadEATraxTags_ID3v2(const char* FilePath, int TrackNumber, JukeboxTrack* E
 		XNFS_printf(1, "%s: Couldn't open %s\n", PRINT_TYPE_ERROR, PathBuffer);
 		return 0;
 	}
-	fclose(fin);
 
+	// check if we're in a RIFF file first...
+	fread(&ChunkID, sizeof(int), 1, fin);
 
-	XNFS_printf(3, "%s: Opening BASS stream for file %s\n", PRINT_TYPE_INFO, PathBuffer);
-	music = BASS_StreamCreateFile(FALSE, PathBuffer, 0, 0, BASS_STREAM_DECODE);
-
-	if (music)
+	if (ChunkID == CHUNKID_RIFF_RIFF)
 	{
-		XNFS_printf(3, "%s: Getting tags with BASS\n", PRINT_TYPE_INFO);
-		id3v2 = BASS_ChannelGetTags(music, BASS_TAG_ID3V2);
+		// looking for RIFF id3 chunk...
+		fseek(fin, 4, SEEK_SET);
+		fread(&FileSize, sizeof(int), 1, fin);
+		FileSize += 8;
+		// skip header info
+		fseek(fin, 8, SEEK_CUR);
+		fread(&ChunkSize, sizeof(int), 1, fin);
+		fseek(fin, ChunkSize, SEEK_CUR);
+
+		// start searching chunks
+		while (ftell(fin) < FileSize)
+		{
+			fread(&ChunkID, sizeof(int), 1, fin);
+			fread(&ChunkSize, sizeof(int), 1, fin);
+			if (ChunkID == CHUNKID_RIFF_ID3)
+			{
+				bFoundID3 = true;
+				break;
+			}
+			fseek(fin, ChunkSize, SEEK_CUR);
+		}
+
+		if (bFoundID3)
+		{
+			id3v2 = (char*)malloc(ChunkSize);
+			fread((void*)id3v2, ChunkSize, 1, fin);
+		}
 	}
+	else if (ChunkID == CHUNKID_ID3)
+	{
+		bFoundID3 = true;
+		fseek(fin, 0, SEEK_SET);
+		fread((void*)id3v2_temp, sizeof(char), 10, fin);
+		int Footer = id3v2_temp[5] & 0x10;
+		id3v2size = id3v2_temp[6] << 21;
+		id3v2size += id3v2_temp[7] << 14;
+		id3v2size += id3v2_temp[8] << 7;
+		id3v2size += id3v2_temp[9];
+		id3v2size += 10;
+		if (Footer)
+			id3v2size += 10;
+
+		id3v2 = (char*)malloc(id3v2size);
+		fseek(fin, 0, SEEK_SET);
+		fread((void*)id3v2, id3v2size, 1, fin);
+	}
+
+	fclose(fin);
 
 	if (id3v2)
 	{
@@ -544,11 +602,9 @@ bool ReadEATraxTags_ID3v2(const char* FilePath, int TrackNumber, JukeboxTrack* E
 
 	if (id3v2 && (!EATrax[TrackNumber].TrackName || !EATrax[TrackNumber].TrackAlbum || !EATrax[TrackNumber].TrackArtist))
 	{
-		ret = 1;
-
 		ID3Magic = *(unsigned int*)id3v2;
 
-		if (ID3Magic == 0x03334449)
+		if (ID3Magic == CHUNKID_ID3)
 		{
 			CurrentBlock = id3v2 + 0xA;
 			while (CurrentBlock < EndPointer)
@@ -631,32 +687,24 @@ bool ReadEATraxTags_ID3v2(const char* FilePath, int TrackNumber, JukeboxTrack* E
 		if (ID3Magic == 0x02334449)
 		{
 			XNFS_printf(2, "%s: Sorry, ID3v2 before 2.3 not supported yet... Send me a file with it and I'll add it. :/\n", PRINT_TYPE_WARNING);
-			ret = 0;
 		}
+		free((void*)id3v2);
 	}
 
-	if ((!bFoundTitle || !bFoundAlbum || !bFoundArtist) && ret) // ID3v1 fallback
+	if ((!bFoundTitle || !bFoundAlbum || !bFoundArtist) && bFoundID3)
 	{
-		TAG_ID3 *id3 = (TAG_ID3*)BASS_ChannelGetTags(music, BASS_TAG_ID3);
-
-		if (id3)
-		{
-			if (!bFoundTitle && !EATrax[TrackNumber].TrackName)
-				ID3v1TrackNameReading(id3, FilePath, TrackNumber, EATrax);
-			if (!bFoundAlbum && !EATrax[TrackNumber].TrackAlbum)
-				ID3v1TrackAlbumReading(id3, FilePath, TrackNumber, EATrax);
-			if (!bFoundArtist && !EATrax[TrackNumber].TrackArtist)
-				ID3v1TrackArtistReading(id3, FilePath, TrackNumber, EATrax);
-		}
-		else
-			ret = 0;
+		if (!bFoundTitle && !EATrax[TrackNumber].TrackName)
+			ReadFilenameAsTrackName(FilePath, TrackNumber, EATrax);
+		if (!bFoundAlbum && !EATrax[TrackNumber].TrackAlbum)
+			ReadLastFolderAsAlbum(FilePath, TrackNumber, EATrax);
+		if (!bFoundArtist && !EATrax[TrackNumber].TrackArtist)
+			ReadTrackNumberAsArtist(FilePath, TrackNumber, EATrax);
 	}
-	BASS_StreamFree(music);
 
-	return ret;
+	return bFoundID3;
 }
 
-bool ReadEATraxTags_ID3v1(const char* FilePath, int TrackNumber, JukeboxTrack* EATrax, DWORD music)
+/*bool ReadEATraxTags_ID3v1(const char* FilePath, int TrackNumber, JukeboxTrack* EATrax, DWORD music)
 {
 	char PathBuffer[1024];
 	strcpy(PathBuffer, FilePath);
@@ -693,7 +741,7 @@ bool ReadEATraxTags_ID3v1(const char* FilePath, int TrackNumber, JukeboxTrack* E
 
 	BASS_StreamFree(music);
 	return ret;
-}
+}*/
 
 void ReadEATraxTags_Online(const char* FilePath, int TrackNumber, JukeboxTrack* EATrax)
 {

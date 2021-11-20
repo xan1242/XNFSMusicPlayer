@@ -531,11 +531,11 @@ int DoFilePathsStruct(char* TxtFile)
 					//	printf("%s: Amplification level: %.3f\n", PRINT_TYPE_INFO, track.ModuleAmpLevel[i]);
 					if (!EATrax[i].TrackName || !EATrax[i].TrackAlbum || !EATrax[i].TrackArtist)
 					{
-						if (ReadEATraxTags_Module(track[i].FilePath, i, EATrax, music))
-						{
-							XNFS_printf(2, "%s: Read tracker tags for file %s\n", PRINT_TYPE_INFO, track[i].FilePath);
-						}
-						else
+						//if (ReadEATraxTags_Module(track[i].FilePath, i, EATrax, music))
+						//{
+						//	XNFS_printf(2, "%s: Read tracker tags for file %s\n", PRINT_TYPE_INFO, track[i].FilePath);
+						//}
+						//else
 							ReadEATraxTags_Unknown(track[i].FilePath, i, EATrax);
 					}
 					break;
@@ -601,11 +601,11 @@ int DoFilePathsStruct(char* TxtFile)
 					XNFS_printf(2, "%s: Assigned streamed track %s to %X\n", PRINT_TYPE_INFO, track[i].FilePath, track[i].PathfinderID);
 					if (!EATrax[i].TrackName || !EATrax[i].TrackAlbum || !EATrax[i].TrackArtist)
 					{
-						if (ReadEATraxTags_ID3v2(track[i].FilePath, i, EATrax, music))
+						if (ReadEATraxTags_ID3v2(track[i].FilePath, i, EATrax))
 							XNFS_printf(2, "%s: Read ID3v2 tags for file %s\n", PRINT_TYPE_INFO, track[i].FilePath);
-						else if (ReadEATraxTags_ID3v1(track[i].FilePath, i, EATrax, music))
-							XNFS_printf(2, "%s: Read ID3v1 tags for file %s\n", PRINT_TYPE_INFO, track[i].FilePath);
-						else if (ReadEATraxTags_RIFFInfo(track[i].FilePath, i, EATrax, music))
+						//else if (ReadEATraxTags_ID3v1(track[i].FilePath, i, EATrax, music))
+						//	XNFS_printf(2, "%s: Read ID3v1 tags for file %s\n", PRINT_TYPE_INFO, track[i].FilePath);
+						else if (ReadEATraxTags_RIFFInfo(track[i].FilePath, i, EATrax))
 							XNFS_printf(2, "%s: Read RIFF INFO tags for file %s\n", PRINT_TYPE_INFO, track[i].FilePath);
 						else
 							ReadEATraxTags_Unknown(track[i].FilePath, i, EATrax);
@@ -628,26 +628,6 @@ int DoFilePathsStruct(char* TxtFile)
 						ReadEATraxTags_Online(track[i].FilePath, i, EATrax);
 					}
 					break;
-
-				/*case FILE_TYPE_VGMSTREAM:
-#ifdef BASS_USE_VGMSTREAM
-					M3UPathCheck(TxtFile, ReadLine, FinalTrackPath);
-					track[i].FilePath = (char*)malloc(strlen(FinalTrackPath) + 1);
-					strcpy(track[i].FilePath, FinalTrackPath);
-
-					track[i].FileType = FILE_TYPE_VGMSTREAM;
-					GenerateEventIDForTrack(i);
-					sprintf(IniReaderSectionID, "%.6X", track[i].PathfinderID);
-					track[i].Loop = inireader.ReadInteger(IniReaderSectionID, "Loop", 0);
-					XNFS_printf(2, "%s: Assigned VGMStream stream %s to %X\n", PRINT_TYPE_INFO, track[i].FilePath, track[i].PathfinderID);
-					if (!EATrax[i].TrackName || !EATrax[i].TrackAlbum || !EATrax[i].TrackArtist)
-					{
-						ReadEATraxTags_Unknown(track[i].FilePath, i, EATrax);
-					}
-#else
-					XNFS_printf(1, "%s: Could NOT assign VGMStream stream %s -- Compile with BASS_USE_VGMSTREAM to enable support.\n", PRINT_TYPE_WARNING, track[i].FilePath);
-#endif
-					break;*/
 
 				case FILE_TYPE_MIDI:
 #ifdef BASS_USE_MIDI
@@ -809,15 +789,6 @@ int DoFileNodePathsStruct(const char* TxtFile, int BankNumberToProcess)
 					node[BankNumberToProcess][i].FileType = FILE_TYPE_ONLINESTREAM;
 					XNFS_printf(3, "%s: Assigned online stream %s to %X\n", PRINT_TYPE_INFO, node[BankNumberToProcess][i].FilePath, node[BankNumberToProcess][i].PathfinderID);
 					break;
-
-				/*case FILE_TYPE_VGMSTREAM:
-#ifdef BASS_USE_VGMSTREAM
-					node[BankNumberToProcess][i].FileType = FILE_TYPE_VGMSTREAM;
-					XNFS_printf(3, "%s: Assigned VGMStream stream %s to %X\n", PRINT_TYPE_INFO, node[BankNumberToProcess][i].FilePath, node[BankNumberToProcess][i].PathfinderID);
-#else
-					XNFS_printf(1, "%s: Could NOT assign VGMStream stream %s -- Compile with BASS_USE_VGMSTREAM to enable support.\n", PRINT_TYPE_WARNING, node[BankNumberToProcess][i].FilePath);
-#endif
-					break;*/
 
 				case FILE_TYPE_MIDI:
 #ifdef BASS_USE_MIDI

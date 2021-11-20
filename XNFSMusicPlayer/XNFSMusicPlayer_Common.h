@@ -485,13 +485,6 @@ int CreateBASSHandleByFileType(int FileType, char* FilePath, DWORD &hHandle)
 			XNFS_printf(1, "%s: Error creating FLAC handle for file: %s | BASS Error: %d\n", PRINT_TYPE_ERROR, FilePath, BASS_ErrorGetCode());
 		break;
 #endif
-/*#ifdef BASS_USE_VGMSTREAM
-	case FILE_TYPE_VGMSTREAM:
-		hHandle = BASS_VGMSTREAM_StreamCreate(FilePath, Flags);
-		break;
-		if (!hHandle)
-			XNFS_printf(1, "%s: Error creating VGMStream handle for file: %s | BASS Error: %d\n", PRINT_TYPE_ERROR, FilePath, BASS_ErrorGetCode());
-#endif*/
 
 	case FILE_TYPE_MIDI:
 #ifdef BASS_USE_MIDI
@@ -766,9 +759,6 @@ int BASSCreate()
 				XNFS_printf(1, "%s: Can't BASS_Free() during init\n", PRINT_TYPE_ERROR);
 		}
 
-		//if (!BASS_SetConfig(BASS_CONFIG_VISTA_TRUEPOS, 0)) // allows lower latency on Vista and newer -- BASS DEPRECATED FEATURE
-		//	XNFS_printf(1, "%s: Error setting config: BASS_CONFIG_VISTA_TRUEPOS: BASS Error: %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());
-
 		if (bUseGameThread)
 		{
 			if (!BASS_SetConfig(BASS_CONFIG_UPDATETHREADS, 0))
@@ -798,20 +788,7 @@ int BASSCreate()
 		if (DevBufferSize > 0)
 			if (!BASS_SetConfig(BASS_CONFIG_DEV_BUFFER, DevBufferSize))
 				XNFS_printf(1, "%s: Error setting config: BASS_CONFIG_DEV_BUFFER: BASS Error: %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());
-#ifdef BASS_USE_MIDI
-		/*if (bEnableBASSMIDI)
-		{
-			XNFS_printf(1, "%s: BASSMIDI loading SoundFont %s\n", PRINT_TYPE_INFO, SoundFontFilePath);
-			fonthandle = BASS_MIDI_FontInit(SoundFontFilePath, 0);
-			if (!fonthandle)
-				XNFS_printf(1, "%s: Error loading SoundFont: BASS Error: %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());
-			fontstruct[0].font = fonthandle;
-			fontstruct[0].preset = -1;
-			fontstruct[0].bank = 0;
-		}
-		else
-			XNFS_printf(1, "%s: BASSMIDI disabled\n", PRINT_TYPE_INFO);*/
-#endif
+
 		bBASSCreated = 1;
 	}
 	if (!BASS_Init(-1, SampleRate, BASS_DEVICE_LATENCY, 0, NULL))
@@ -930,49 +907,6 @@ int SetupInstallMusic(const char* MusicFileName)
 	TrackCount = 1;
 	JukeboxTrack dummy = {};
 
-
-	/*switch (CheckIfSupportedFile(track[0].FilePath))
-	{
-	case FILE_TYPE_TRACKER:
-		track[0].FileType = FILE_TYPE_TRACKER;
-		XNFS_printf(2, "%s: Assigned tracker module %s to %X\n", PRINT_TYPE_INFO, track[0].FilePath, track[0].PathfinderID);
-		break;
-
-#ifdef BASS_USE_FLAC
-	case (FILE_TYPE_FLAC):
-
-		track[0].FileType = FILE_TYPE_FLAC;
-		XNFS_printf(2, "%s: Assigned FLAC stream %s to %X\n", PRINT_TYPE_INFO, track[0].FilePath, track[0].PathfinderID);
-		break;
-#endif
-	case (FILE_TYPE_OGG):
-		track[0].FileType = FILE_TYPE_OGG;
-		XNFS_printf(2, "%s: Assigned OGG stream %s to %X\n", PRINT_TYPE_INFO, track[0].FilePath, track[0].PathfinderID);
-		break;
-
-	case (FILE_TYPE_STREAM):
-		track[0].FileType = FILE_TYPE_STREAM;
-		XNFS_printf(2, "%s: Assigned streamed track %s to %X\n", PRINT_TYPE_INFO, track[0].FilePath, track[0].PathfinderID);
-		break;
-
-	case FILE_TYPE_ONLINESTREAM:
-		track[0].FileType = FILE_TYPE_ONLINESTREAM;
-		XNFS_printf(2, "%s: Assigned online stream %s to %X\n", PRINT_TYPE_INFO, track[0].FilePath, track[0].PathfinderID);
-		break;
-
-	case FILE_TYPE_MIDI:
-#ifdef BASS_USE_MIDI
-		track[0].FileType = FILE_TYPE_MIDI;
-		XNFS_printf(2, "%s: Assigned a MIDI track %s to %X\n", PRINT_TYPE_INFO, track[0].FilePath, track[0].PathfinderID);
-		break;
-#else
-		XNFS_printf(1, "%s: Could NOT assign a MIDI track %s -- Compile with BASS_USE_MIDI to enable support.\n", PRINT_TYPE_WARNING, overrides[i].FilePath);
-#endif
-	default:
-		track[0].FileType = FILE_TYPE_UNKNOWN;
-		XNFS_printf(1, "%s: Assigned unknown type track %s to %X\n", PRINT_TYPE_WARNING, track[0].FilePath, track[0].PathfinderID);
-	}*/
-
 	switch (CheckIfSupportedFile(track[0].FilePath))
 	{
 	case FILE_TYPE_TRACKER:
@@ -980,11 +914,11 @@ int SetupInstallMusic(const char* MusicFileName)
 		XNFS_printf(2, "%s: Assigned tracker module %s to %X\n", PRINT_TYPE_INFO, track[0].FilePath, track[0].PathfinderID);
 		if (!dummy.TrackName || !dummy.TrackAlbum || !dummy.TrackArtist)
 		{
-			if (ReadEATraxTags_Module(track[0].FilePath, 0, &dummy, music))
-			{
-				XNFS_printf(2, "%s: Read tracker tags for file %s\n", PRINT_TYPE_INFO, track[0].FilePath);
-			}
-			else
+			//if (ReadEATraxTags_Module(track[0].FilePath, 0, &dummy, music))
+			//{
+			//	XNFS_printf(2, "%s: Read tracker tags for file %s\n", PRINT_TYPE_INFO, track[0].FilePath);
+			//}
+			//else
 				ReadEATraxTags_Unknown(track[0].FilePath, 0, &dummy);
 		}
 		break;
@@ -1021,11 +955,11 @@ int SetupInstallMusic(const char* MusicFileName)
 		XNFS_printf(2, "%s: Assigned streamed track %s to %X\n", PRINT_TYPE_INFO, track[0].FilePath, track[0].PathfinderID);
 		if (!dummy.TrackName || !dummy.TrackAlbum || !dummy.TrackArtist)
 		{
-			if (ReadEATraxTags_ID3v2(track[0].FilePath, 0, &dummy, music))
+			if (ReadEATraxTags_ID3v2(track[0].FilePath, 0, &dummy))
 				XNFS_printf(2, "%s: Read ID3v2 tags for file %s\n", PRINT_TYPE_INFO, track[0].FilePath);
-			else if (ReadEATraxTags_ID3v1(track[0].FilePath, 0, &dummy, music))
-				XNFS_printf(2, "%s: Read ID3v1 tags for file %s\n", PRINT_TYPE_INFO, track[0].FilePath);
-			else if (ReadEATraxTags_RIFFInfo(track[0].FilePath, 0, &dummy, music))
+			//else if (ReadEATraxTags_ID3v1(track[0].FilePath, 0, &dummy, music))
+			//	XNFS_printf(2, "%s: Read ID3v1 tags for file %s\n", PRINT_TYPE_INFO, track[0].FilePath);
+			else if (ReadEATraxTags_RIFFInfo(track[0].FilePath, 0, &dummy))
 				XNFS_printf(2, "%s: Read RIFF INFO tags for file %s\n", PRINT_TYPE_INFO, track[0].FilePath);
 			else
 				ReadEATraxTags_Unknown(track[0].FilePath, 0, &dummy);
@@ -1125,15 +1059,6 @@ int DoFileOverrides(const char* TxtFile)
 					XNFS_printf(2, "%s: Assigned online stream %s to %X\n", PRINT_TYPE_INFO, overrides[i].FilePath, overrides[i].PathfinderID);
 					break;
 
-				/*case FILE_TYPE_VGMSTREAM:
-#ifdef BASS_USE_VGMSTREAM
-					overrides[i].FileType = FILE_TYPE_VGMSTREAM;
-					XNFS_printf(2, "%s: Assigned VGMStream stream %s to %X\n", PRINT_TYPE_INFO, overrides[i].FilePath, overrides[i].PathfinderID);
-#else
-					XNFS_printf(1, "%s: Could NOT assign VGMStream stream %s -- Compile with BASS_USE_VGMSTREAM to enable support.\n", PRINT_TYPE_WARNING, overrides[i].FilePath);
-#endif
-					break;*/
-
 				case FILE_TYPE_MIDI:
 #ifdef BASS_USE_MIDI
 					overrides[i].FileType = FILE_TYPE_MIDI;
@@ -1199,6 +1124,25 @@ void M3UPathCheck(const char* M3UFile, const char* InPath, char* OutPath)
 	strcpy(OutPath, StringToCopy);
 }
 
+// this hack is necessary to prevent bass.dll from hanging during BASS_Init when reading tags...
+// for some reason the callback that sets a handle number from 0xFFFFFFFF never gets written during this stage.
+// this did not happen in the older versions of BASS so I have no clue what's going on
+// NOTE: this was written during BASS version 2.4.16.7 - I'd LOVE to use pattern detection here but it simply doesn't work currently
+// To actually fix this, I'll need help from the author of BASS himself (Ian Luck) because this is a doozy
+// (or better yet - I've written a RIFF/ID3 tag reader of my own instead of relying on BASS to handle this task)
+// 
+// Currently this hack is in standby mode here as a last resort. All BASS tag readers are disabled. (sadly we lose tracker title reads but OH WELL)
+// 
+//void BASSInitHack(bool bUndo)
+//{
+//	if (bUndo)
+//	{
+//		injector::WriteMemory<unsigned char>(((unsigned int)(&BASS_Init) - 0x666A), 0x74, true);
+//		injector::WriteMemory<unsigned char>(((unsigned int)(&BASS_Init) - 0x6669), 0xEF, true);
+//	}
+//	else
+//		injector::MakeNOP(((unsigned int)(&BASS_Init) - 0x666A), 2, true);
+//}
 
 int InitConfig()
 {
@@ -1259,12 +1203,17 @@ int InitConfig()
 
 		XNFS_printf(1, "%s: Processing playlist\n", PRINT_TYPE_INFO);
 
+		// for tag reading...
+		//BASSInitHack(false);
+
 		if (CheckIfFileExists(0, PlaylistFile))
 			DoFilePathsStruct(PlaylistFile);
 		else
 			SetNoTracksWarning();
 
 		AppendOverridesAndFree(TrackCount);
+
+		//BASSInitHack(true);
 	}
 	else
 	{
