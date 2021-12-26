@@ -115,6 +115,7 @@ In this file you can define which EventID is tied to which file precisely, so if
 - Unicode
 - installer direct process calling instead of batch scripting - this will allow for percentage overview in the dialog boxes
 - sflist support
+- proper versioning generation & Git integration (this is still very much a mess)
 
 ## CREDITS
 
