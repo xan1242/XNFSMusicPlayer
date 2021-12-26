@@ -492,7 +492,7 @@ int DoFilePathsStruct(char* TxtFile)
 	CIniReader inireader(PlaylistConfigFile);
 	char IniReaderSectionID[16];
 
-	BASS_Init(0, 0, 0, 0, NULL);
+	//BASS_Init(0, 0, 0, 0, NULL);
 
 	if (fin == NULL)
 	{
