@@ -43,7 +43,9 @@ bool bInstallerComplete = 1;
 bool bSlowHashing = 0;
 bool bInstallerMusic = 0;
 
-unsigned int CurrentPlayingFileType = 0;
+//unsigned int CurrentPlayingFileType = 0;
+unsigned int CurrentPlayingTrack = 0;
+unsigned int CurrentPlayingNode = 0;
 unsigned int PauseChannel = 0;
 unsigned int ResumeChannel = 0;
 unsigned int GlobalVolume = 10000;
@@ -255,7 +257,7 @@ unsigned int CheckIfSupportedFile(const char* filename)
 	return FILE_TYPE_UNKNOWN;
 }
 
-int SetCurrentPlayingFileType(unsigned int FileType)
+/*int SetCurrentPlayingFileType(unsigned int FileType)
 {
 	switch (FileType)
 	{
@@ -278,7 +280,7 @@ int SetCurrentPlayingFileType(unsigned int FileType)
 		CurrentPlayingFileType = FILE_TYPE_VGMSTREAM;
 		break;
 #endif*/
-#ifdef BASS_USE_MIDI
+/*#ifdef BASS_USE_MIDI
 	case FILE_TYPE_MIDI:
 		CurrentPlayingFileType = FILE_TYPE_MIDI;
 		break;
@@ -288,7 +290,7 @@ int SetCurrentPlayingFileType(unsigned int FileType)
 		CurrentPlayingFileType = FILE_TYPE_UNKNOWN;
 	}
 	return 0;
-}
+}*/
 
 int SearchPathByID(unsigned int ID) // needs abstraction
 {
@@ -298,8 +300,9 @@ int SearchPathByID(unsigned int ID) // needs abstraction
 	{
 		if (ID == track[i].PathfinderID)
 		{
+			CurrentPlayingTrack = i;
 			file = track[i].FilePath;
-			SetCurrentPlayingFileType(track[i].FileType);
+			//SetCurrentPlayingFileType(track[i].FileType);
 			XNFS_printf(2, "%s: Found and set file %s to %X\n", PRINT_TYPE_INFO, file, track[i].PathfinderID);
 			XNFS_printf(2, "%s: Type: %s\n", PRINT_TYPE_INFO, FormatTypeStrings[track[i].FileType]);
 			FoundIDNum = i;
@@ -672,7 +675,7 @@ int BASSPlayChannel(int something1, unsigned int something2, int something3, int
 			XNFS_printf(1, "%s: Can't remove sync (handle: music, sync: MetaSync): BASS Error: %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());
 	MetaSync = 0;
 	SearchPathByID(MusicID);
-	CreateBASSHandleByFileType(CurrentPlayingFileType, file, music);
+	CreateBASSHandleByFileType(track[CurrentPlayingTrack].FileType, file, music);
 	if (bGameVolumeControl)
 		if (!BASS_ChannelSetAttribute(music, BASS_ATTRIB_VOL, LastVolume))
 			XNFS_printf(1, "%s: Can't set volume attribute (handle: music): BASS Error: %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());

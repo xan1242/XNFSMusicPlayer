@@ -207,8 +207,9 @@ int SearchPathByNodeID(unsigned int ID)
 	{
 		if (ID == node[i].PathfinderID)
 		{
+			CurrentPlayingNode = i;
 			file = node[i].FilePath;
-			SetCurrentPlayingFileType(node[i].FileType);
+			//SetCurrentPlayingFileType(node[i].FileType);
 			XNFS_printf(2, "%s: Found and set file %s to %X\n", PRINT_TYPE_INFO, file, node[i].PathfinderID);
 			XNFS_printf(2, "%s: Type: %s\n", PRINT_TYPE_INFO, FormatTypeStrings[node[i].FileType]);
 			FoundIDNum = i;
