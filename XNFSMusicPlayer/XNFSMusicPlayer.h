@@ -66,6 +66,8 @@ HSOUNDFONT fonthandle;
 
 #include "stdio.h"
 
+bool bConsoleExists = false;
+
 struct PathfinderStruct
 {
 	unsigned int Unknown1;
@@ -230,5 +232,3 @@ crc24 crc_octets(unsigned char *octets, size_t len)
 	}
 	return crc & 0xFFFFFFL;
 }
-
-bool bConsoleExists = false;
