@@ -44,7 +44,6 @@ bool bSlowHashing = 0;
 bool bInstallerMusic = 0;
 
 //unsigned int CurrentPlayingFileType = 0;
-unsigned int CurrentPlayingTrack = 0;
 unsigned int CurrentPlayingNode = 0;
 unsigned int PauseChannel = 0;
 unsigned int ResumeChannel = 0;
@@ -300,7 +299,6 @@ int SearchPathByID(unsigned int ID) // needs abstraction
 	{
 		if (ID == track[i].PathfinderID)
 		{
-			CurrentPlayingTrack = i;
 			file = track[i].FilePath;
 			//SetCurrentPlayingFileType(track[i].FileType);
 			XNFS_printf(2, "%s: Found and set file %s to %X\n", PRINT_TYPE_INFO, file, track[i].PathfinderID);
@@ -580,7 +578,7 @@ int BASSTimeRemaining()
 	time = (float)BASS_ChannelBytes2Seconds(music, remaining); // time remaining in seconds
 		
 	//printf("Time remaining: %.3f\n%llx\n", time, remaining);
-	if ((time < 0.0) || (bStopNodeQueueing && bInteractiveMode) || (track[FoundIDNum].Loop == -1)) // If time is negative, it's probably infinite, so we stick the time to 1.0. Also a hack to stop interactive music.
+	if ((time < 0.0) || (bStopNodeQueueing && bInteractiveMode) || (track[FoundIDNum].Loop == -1) || (track[FoundIDNum].FileType == FILE_TYPE_ONLINESTREAM)) // If time is negative, it's probably infinite, so we stick the time to 1.0. Also a hack to stop interactive music.
 		return 1000;
 
 #ifdef GAME_CARBON // willing to make an exception not to put it in the Carbon.h file for this little snippet
@@ -675,7 +673,7 @@ int BASSPlayChannel(int something1, unsigned int something2, int something3, int
 			XNFS_printf(1, "%s: Can't remove sync (handle: music, sync: MetaSync): BASS Error: %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());
 	MetaSync = 0;
 	SearchPathByID(MusicID);
-	CreateBASSHandleByFileType(track[CurrentPlayingTrack].FileType, file, music);
+	CreateBASSHandleByFileType(track[FoundIDNum].FileType, file, music);
 	if (bGameVolumeControl)
 		if (!BASS_ChannelSetAttribute(music, BASS_ATTRIB_VOL, LastVolume))
 			XNFS_printf(1, "%s: Can't set volume attribute (handle: music): BASS Error: %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());
