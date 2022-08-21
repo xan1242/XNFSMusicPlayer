@@ -185,7 +185,7 @@ int __stdcall XNFS_printf(unsigned int Level, const char* Format, ...)
 {
 	va_list ArgList;
 	int Result = 0;
-	if ((Level <= VerbosityLevel) && VerbosityLevel)
+	if ((Level <= VerbosityLevel) && VerbosityLevel && bConsoleExists)
 	{
 		__crt_va_start(ArgList, Format);
 		Result = vfprintf(stdout, Format, ArgList);
@@ -230,3 +230,5 @@ crc24 crc_octets(unsigned char *octets, size_t len)
 	}
 	return crc & 0xFFFFFFL;
 }
+
+bool bConsoleExists = false;
