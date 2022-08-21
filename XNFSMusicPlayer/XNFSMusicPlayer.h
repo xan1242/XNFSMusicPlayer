@@ -17,8 +17,9 @@
 #define XNFS_TESTBUILD
 #endif
 
+// TODO - implement proper versioning
 #define BUILD_VER_MAJOR 1
-#define BUILD_VER_MINOR 9
+#define BUILD_VER_MINOR 11
 
 #define FILE_TYPE_TRACKER 1
 #define FILE_TYPE_STREAM 2
