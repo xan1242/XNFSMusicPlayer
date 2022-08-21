@@ -1,6 +1,7 @@
 // XNFSMusicPlayerInstaller - the ingame installer!
 // by Xanvier / xan1242
 // 11/2021 - dropped support for VGMStream, hence dropping direct ASF support...
+// 08/2022 - removing NoClean bool and improving the logic...
 
 #include "..\includes\IniReader.h"
 #include "..\includes\injector\hooking.hpp"
@@ -17,13 +18,11 @@ int ShowFileErrorDialog = 0;
 bool bASFScannerFinished = 0;
 bool bNodeScannerFinished = 0;
 bool bScanForAllFiles = 0;
-bool bNoClean = 0;
 bool bInteractiveMusicFolderExists = 0;
 bool bEnableInteractiveNoding = 1;
 bool bDialogShownAtLeastOnce = 0;
 bool bBreakThreadLoop = 0;
 bool bUseOGGenc = 1;
-bool bUseASF = 1;
 float OGGEncQuality = 9.0;
 int ButtonResult = 0;
 int SystemReturnValue = 0;
@@ -56,17 +55,18 @@ void __stdcall QueueGameMessageHook(unsigned int Message, const char* pkg_name, 
 	cFEng_QueueMessage(*(void**)CFENGINSTANCE_ADDRESS, Message, pkg_name, (void*)0xFFFFFFFF, unk);
 }
 
-const char SXBatchScript[] = "@for %%f in (\"InteractiveMusic/*.asf\") do scripts\\XNFSInstallerTools\\sx.exe -wave \"InteractiveMusic/%%f\" -=\"InteractiveMusic/%%f.wav\"\n\
-@exit /b 69";
+const char SXBatchScript[] = "@echo off\n\
+for %%f in (InteractiveMusic/*.asf) do (\n\
+\"scripts\\XNFSInstallerTools\\sx.exe\" -wave \"InteractiveMusic/%%f\" -=\"InteractiveMusic/%%f.wav\"\n\
+del InteractiveMusic\\%%f /Q)\n\
+exit /b 69";
 
-const char OGGEncBatchScript[] = "@for %%%%f in (\"InteractiveMusic/*.wav\") do scripts\\XNFSInstallerTools\\oggenc2.exe -q %.2f \"InteractiveMusic/%%%%f\"\n\
-@exit /b 68";
-
-const char ASFCleanupScript[] = "@del InteractiveMusic\\*.asf /Q\n\
-@exit /b 67";
-
-const char WAVCleanupScript[] = "@del InteractiveMusic\\*.wav /Q\n\
-@exit /b 66";
+// using printf formatting because this string is used in sprintf
+const char OGGEncBatchScript[] = "@echo off\n\
+for %%%%f in (InteractiveMusic/*.wav) do (\n\
+\"scripts\\XNFSInstallerTools\\oggenc2.exe\" -q %.2f \"InteractiveMusic/%%%%f\"\n\
+del InteractiveMusic\\%%%%f /Q)\n\
+exit /b 68";
 
 char* FilenameFormat;
 
@@ -256,42 +256,18 @@ DWORD WINAPI InstallerStateManager(LPVOID)
 			DialogInterface_ShowDialog(&IntroMessageConfig);
 			bDialogShownAtLeastOnce = 1;
 		}
-		if (SystemReturnValue == 69)
+		if (SystemReturnValue == 69) // after SX is done
 		{
-			//DialogInterface_ShowDialog(&ASFCleanup);
-			if (bNoClean)
-				if (bUseOGGenc)
-					ButtonResult = OK06;
-				else
-					ButtonResult = OK07;
+			if (bUseOGGenc)
+				ButtonResult = OK06; // do OggEnc
 			else
-				ButtonResult = YES3;
+				ButtonResult = OK07; // generate node info
 
 			SystemReturnValue = 0;
 		}
-		if (SystemReturnValue == 68)
+		if (SystemReturnValue == 68) // after OGGEnc is done
 		{
-			//DialogInterface_ShowDialog(&WAVCleanup);
-			if (bNoClean)
-				ButtonResult = OK07;
-			else
-				ButtonResult = YES4;
-			SystemReturnValue = 0;
-		}
-		if (SystemReturnValue == 67)
-		{
-			if (bUseOGGenc)
-				ButtonResult = OK06;
-				//DialogInterface_ShowDialog(&ASFCleanupDone1);
-			else
-				ButtonResult = OK07;
-				//DialogInterface_ShowDialog(&ASFCleanupDone2);
-			SystemReturnValue = 0;
-		}
-		if (SystemReturnValue == 66)
-		{
-			//DialogInterface_ShowDialog(&WAVCleanupDone);
-			ButtonResult = OK07;
+			ButtonResult = OK07; // generate node info
 			SystemReturnValue = 0;
 		}
 		if (bNodeScannerFinished)
@@ -312,12 +288,7 @@ DWORD WINAPI InstallerStateManager(LPVOID)
 		}
 		if (bASFScannerFinished)
 		{
-			if (bUseASF)
-				ButtonResult = OK07;
-				//DialogInterface_ShowDialog(&ExtractSuccess1);
-			else
-				ButtonResult = OK05;
-				//DialogInterface_ShowDialog(&ExtractSuccess2);
+			ButtonResult = OK05; // do sx.exe
 			bASFScannerFinished = 0;
 		}
 
@@ -340,14 +311,11 @@ DWORD WINAPI InstallerStateManager(LPVOID)
 			DialogInterface_ShowDialog(&StartMessageConfig);
 			break;
 		case OK03:
-			//DialogInterface_ShowDialog_Custom(&FormatQuestion, ASFBUTTON, WAVBUTTON, OGGBUTTON);
 			DialogInterface_ShowDialog_Custom(&FormatQuestion, OGGBUTTON, WAVBUTTON, NULL);
 			break;
 		case USEWAV:
 			bUseOGGenc = 0;
 		case USEOGG:
-			bUseASF = 0;
-		case USEASF:
 			DialogInterface_ShowDialog_Custom(&ExtractionMessage, EXTRACTIONBUTTON, 0, 0);
 			break;
 		case OK04:
@@ -372,58 +340,22 @@ DWORD WINAPI InstallerStateManager(LPVOID)
 			}
 			break;
 		case OK05:
-			if (!bUseASF)
-			{
-				if (bInteractiveMusicFolderExists)
-					DialogInterface_ShowDialog(&DecodingAlreadyExists);
-				else
-				{
-					DialogInterface_ShowDialog(&SXToolDecodingMsg);
-					batchfileout = fopen("XNFSTempBatch.bat", "w");
-					fwrite(SXBatchScript, strlen(SXBatchScript), 1, batchfileout);
-					fclose(batchfileout);
-					SystemReturnValue = system("XNFSTempBatch.bat");
-					remove("XNFSTempBatch.bat");
-				}
-			}
-			break;
-		case YES3:
-			CurrentDialog_FEPrintf(NULL, MESSAGEOBJECTHASH, ASFCLEANUPMESSAGE);
-			batchfileout = fopen("XNFSTempBatch3.bat", "w");
-			fwrite(ASFCleanupScript, strlen(ASFCleanupScript), 1, batchfileout);
+			DialogInterface_ShowDialog(&SXToolDecodingMsg);
+			batchfileout = fopen("XNFSTempBatch.bat", "w");
+			fwrite(SXBatchScript, strlen(SXBatchScript), 1, batchfileout);
 			fclose(batchfileout);
-			SystemReturnValue = system("XNFSTempBatch3.bat");
-			remove("XNFSTempBatch3.bat");
-			break;
-		case NO03:
-			if (bUseOGGenc)
-				DialogInterface_ShowDialog(&ASFNotCleaning1);
-			else
-				DialogInterface_ShowDialog(&ASFNotCleaning2);
-			break;
-		case YES4:
-			CurrentDialog_FEPrintf(NULL, MESSAGEOBJECTHASH, WAVCLEANUPMESSAGE);
-			batchfileout = fopen("XNFSTempBatch4.bat", "w");
-			fwrite(WAVCleanupScript, strlen(WAVCleanupScript), 1, batchfileout);
-			fclose(batchfileout);
-			SystemReturnValue = system("XNFSTempBatch4.bat");
-			remove("XNFSTempBatch4.bat");
-			break;
-		case NO04:
-			DialogInterface_ShowDialog(&WAVNotCleaning);
+			SystemReturnValue = system("XNFSTempBatch.bat");
+			remove("XNFSTempBatch.bat");
 			break;
 		case OK06:
-			if (bUseOGGenc)
-			{
-				DialogInterface_ShowMessage(DLG_ANIMATING, DLGTITLE_ATTN, OGGENCODINGFORMATTER, OGGEncQuality);
-				BatchScriptBuffer = (char*)malloc(strlen(OGGEncBatchScript));
-				sprintf(BatchScriptBuffer, OGGEncBatchScript, OGGEncQuality);
-				batchfileout = fopen("XNFSTempBatch2.bat", "w");
-				fwrite(BatchScriptBuffer, strlen(BatchScriptBuffer), 1, batchfileout);
-				fclose(batchfileout);
-				SystemReturnValue = system("XNFSTempBatch2.bat");
-				remove("XNFSTempBatch2.bat");
-			}
+			DialogInterface_ShowMessage(DLG_ANIMATING, DLGTITLE_ATTN, OGGENCODINGFORMATTER, OGGEncQuality);
+			BatchScriptBuffer = (char*)malloc(strlen(OGGEncBatchScript));
+			sprintf(BatchScriptBuffer, OGGEncBatchScript, OGGEncQuality);
+			batchfileout = fopen("XNFSTempBatch2.bat", "w");
+			fwrite(BatchScriptBuffer, strlen(BatchScriptBuffer), 1, batchfileout);
+			fclose(batchfileout);
+			SystemReturnValue = system("XNFSTempBatch2.bat");
+			remove("XNFSTempBatch2.bat");
 			break;
 		case OK07:
 			DialogInterface_ShowDialog(&ExtractingMessage);
@@ -439,9 +371,7 @@ DWORD WINAPI InstallerStateManager(LPVOID)
 				ShowFileErrorDialog = 2;
 				break;
 			}
-			if (bUseASF)
-				FilenameFormat = "InteractiveMusic\\MW_Music.mus_%d.asf";
-			else if (bUseOGGenc)
+			if (bUseOGGenc)
 				FilenameFormat = "InteractiveMusic\\MW_Music.mus_%d.asf.ogg";
 			else
 				FilenameFormat = "InteractiveMusic\\MW_Music.mus_%d.asf.wav";
@@ -473,7 +403,6 @@ int Init()
 	CIniReader inireader("XNFSMusicPlayer.ini");
 	bInstallerCompleted = inireader.ReadInteger("Installer", "InstallerCompleted", 0);
 	bScanForAllFiles = inireader.ReadInteger("Installer", "ScanForAllFiles", 0);
-	bNoClean = inireader.ReadInteger("Installer", "NoClean", 0);
 	OGGEncQuality = inireader.ReadFloat("Installer", "OGGEncQuality", 9.0);
 	return 0;
 }
@@ -484,7 +413,6 @@ bool separate_console(void)
 
 	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
 	{
-		//printf("GetConsoleScreenBufferInfo failed: %lu\n", GetLastError());
 		return FALSE;
 	}
 
@@ -504,6 +432,7 @@ BOOL APIENTRY DllMain(HMODULE /*hModule*/, DWORD reason, LPVOID /*lpReserved*/)
 				bConsoleExists = true;
 				freopen("CON", "w", stdout);
 				freopen("CON", "w", stderr);
+				freopen("CON", "r", stdin);
 			}
 			else
 			{
