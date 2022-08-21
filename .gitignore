@@ -372,3 +372,6 @@ FodyWeavers.xsd
 /Release-UC
 /Debug-World
 /Release-World
+/BASS
+/BASSFLAC
+/BASSMIDI
