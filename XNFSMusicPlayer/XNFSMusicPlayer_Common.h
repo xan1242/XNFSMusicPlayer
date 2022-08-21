@@ -330,7 +330,7 @@ void _declspec(naked) PauseChannelCave()
 			if (BASS_ChannelIsActive(oldhandle) == BASS_ACTIVE_PLAYING)
 				if (!BASS_ChannelPause(oldhandle))
 					XNFS_printf(1, "%s: Error pausing channel (1) during interactive mode (handle: oldhandle): BASS Error %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());
-		bStopNodeQueueing = 1;
+		//bStopNodeQueueing = 1;
 	}
 	_asm
 	{
@@ -346,11 +346,11 @@ void _declspec(naked) ResumeChannelCave()
 		mov eax, [esi + 0x14]
 		mov ResumeChannel, eax
 	}
-	if (ResumeChannel == 1 && (bPlayedAtLeastOnce || bPlayedInteractiveAtLeastOnce))
+	if (ResumeChannel == 1 && ((bPlayedAtLeastOnce || bPlayedInteractiveAtLeastOnce)) && !IS_GAME_PAUSED)
 	{
 		if (!BASS_ChannelPlay(music, FALSE))
 			XNFS_printf(1, "%s: Error resuming channel (handle: music, restart: FALSE): BASS Error: %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());
-		bStopNodeQueueing = 0;
+		//bStopNodeQueueing = 0;
 		if (BASS_ChannelIsActive(music) == BASS_ACTIVE_STOPPED)
 			if (!BASS_ChannelPlay(music, TRUE))
 				XNFS_printf(1, "%s: Error resuming channel (handle: music, restart: TRUE): BASS Error: %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());

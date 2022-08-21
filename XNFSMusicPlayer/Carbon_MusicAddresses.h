@@ -146,3 +146,6 @@
 #define SKIPFE_ADDRESS 0x00A9E620
 #define THEGAMEFLOWMANAGER_ADDRESS 0x00A99BBC
 #define SOUNDLOSTWINFOCUS_ADDRESS 0xAB0B3C
+
+// Carbon doesn't have the pause menu problem (menu screen destruct = resume music)
+#define IS_GAME_PAUSED false

@@ -72,3 +72,5 @@
 
 // allow for track changing everywhere, not just in FE
 #define TRACKCHANGE_NOP_ADDR 0x005170CF
+
+#define IS_GAME_PAUSED *(bool*)0x0091CAE4
