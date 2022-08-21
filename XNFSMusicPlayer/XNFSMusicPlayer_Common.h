@@ -505,7 +505,7 @@ int CreateBASSHandleByFileType(int FileType, char* FilePath, DWORD &hHandle)
 		strcpy(strrchr(SF2filename, '.'), ".sf2");
 		if (CheckIfFileExists(true, SF2filename))
 		{
-			XNFS_printf(1, "%s: BASSMIDI loading track-specific SoundFont: %s\n", PRINT_TYPE_INFO, SF2filename);
+			XNFS_printf(2, "%s: BASSMIDI loading track-specific SoundFont: %s\n", PRINT_TYPE_INFO, SF2filename);
 			fonthandle = BASS_MIDI_FontInit(SF2filename, 0);
 			if (!fonthandle)
 				XNFS_printf(1, "%s: Error loading SoundFont: BASS Error: %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());
