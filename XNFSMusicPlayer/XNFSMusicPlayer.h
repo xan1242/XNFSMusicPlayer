@@ -187,10 +187,11 @@ int __stdcall XNFS_printf(unsigned int Level, const char* Format, ...)
 {
 	va_list ArgList;
 	int Result = 0;
-	if ((Level <= VerbosityLevel) && VerbosityLevel && bConsoleExists)
+	if ((Level <= VerbosityLevel) && VerbosityLevel)
 	{
 		__crt_va_start(ArgList, Format);
-		Result = vfprintf(stdout, Format, ArgList);
+		if (bConsoleExists)
+			Result = vfprintf(stdout, Format, ArgList);
 		if (bLogFileEnabled)
 		{
 			if (!bLogFileCreated)
