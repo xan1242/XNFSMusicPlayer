@@ -330,7 +330,6 @@ bool ReadEATraxTags_OGG(const char* FilePath, int TrackNumber, JukeboxTrack* EAT
 	unsigned char SegmentTable[255];
 	char VorbisVorbis[6];
 
-	system("cd");
 	FILE *fin = fopen(FilePath, "rb");
 	if (fin == NULL)
 	{
