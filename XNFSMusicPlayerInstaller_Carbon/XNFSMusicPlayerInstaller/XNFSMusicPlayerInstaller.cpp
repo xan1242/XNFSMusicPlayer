@@ -30,35 +30,40 @@ bool bEnableInteractiveNoding = 1;
 bool bDialogShownAtLeastOnce = 0;
 bool bBreakThreadLoop = 0;
 bool bUseOGGenc = 0;
-//bool bUseASF = 1;
 bool bExtractFinished = 0;
 float OGGEncQuality = 9.0;
 int SystemReturnValue = 0;
 bool bNoClean = 0;
 
-const char SXBatchScript[] = "@for %%f in (\"InteractiveMusicBank0/*.asf\") do scripts\\XNFSInstallerTools\\sx.exe -wave \"InteractiveMusicBank0/%%f\" -=\"InteractiveMusicBank0/%%f.wav\"\n\
-@for %%f in (\"InteractiveMusicBank1/*.asf\") do scripts\\XNFSInstallerTools\\sx.exe -wave \"InteractiveMusicBank1/%%f\" -=\"InteractiveMusicBank1/%%f.wav\"\n\
-@for %%f in (\"InteractiveMusicBank2/*.asf\") do scripts\\XNFSInstallerTools\\sx.exe -wave \"InteractiveMusicBank2/%%f\" -=\"InteractiveMusicBank2/%%f.wav\"\n\
-@for %%f in (\"InteractiveMusicBank3/*.asf\") do scripts\\XNFSInstallerTools\\sx.exe -wave \"InteractiveMusicBank3/%%f\" -=\"InteractiveMusicBank3/%%f.wav\"\n\
-@exit /b 69";
+const char SXBatchScript[] = "@echo off\n\
+for %%f in (InteractiveMusicBank0/*.asf) do (\n\
+scripts\\XNFSInstallerTools\\sx.exe -wave \"InteractiveMusicBank0/%%f\" -=\"InteractiveMusicBank0/%%f.wav\"\n\
+del InteractiveMusicBank0\\%%f /Q)\n\
+for %%f in (InteractiveMusicBank1/*.asf) do (\n\
+scripts\\XNFSInstallerTools\\sx.exe -wave \"InteractiveMusicBank1/%%f\" -=\"InteractiveMusicBank1/%%f.wav\"\n\
+del InteractiveMusicBank1\\%%f /Q)\n\
+for %%f in (InteractiveMusicBank2/*.asf) do (\n\
+scripts\\XNFSInstallerTools\\sx.exe -wave \"InteractiveMusicBank2/%%f\" -=\"InteractiveMusicBank2/%%f.wav\"\n\
+del InteractiveMusicBank2\\%%f /Q)\n\
+for %%f in (InteractiveMusicBank3/*.asf) do (\n\
+scripts\\XNFSInstallerTools\\sx.exe -wave \"InteractiveMusicBank3/%%f\" -=\"InteractiveMusicBank3/%%f.wav\"\n\
+del InteractiveMusicBank3\\%%f /Q)\n\
+exit /b 69";
 
-const char OGGEncBatchScript[] = "@for %%%%f in (\"InteractiveMusicBank0/*.wav\") do scripts\\XNFSInstallerTools\\oggenc2.exe -q %.2f \"InteractiveMusicBank0/%%%%f\"\n\
-@for %%%%f in (\"InteractiveMusicBank1/*.wav\") do scripts\\XNFSInstallerTools\\oggenc2.exe -q %.2f \"InteractiveMusicBank1/%%%%f\"\n\
-@for %%%%f in (\"InteractiveMusicBank2/*.wav\") do scripts\\XNFSInstallerTools\\oggenc2.exe -q %.2f \"InteractiveMusicBank2/%%%%f\"\n\
-@for %%%%f in (\"InteractiveMusicBank3/*.wav\") do scripts\\XNFSInstallerTools\\oggenc2.exe -q %.2f \"InteractiveMusicBank3/%%%%f\"\n\
-@exit /b 68";
-
-const char ASFCleanupScript[] = "@del InteractiveMusicBank0\\*.asf /Q\n\
-@del InteractiveMusicBank1\\*.asf /Q\n\
-@del InteractiveMusicBank2\\*.asf /Q\n\
-@del InteractiveMusicBank3\\*.asf /Q\n\
-@exit /b 67";
-
-const char WAVCleanupScript[] = "@del InteractiveMusicBank0\\*.wav /Q\n\
-@del InteractiveMusicBank1\\*.wav /Q\n\
-@del InteractiveMusicBank2\\*.wav /Q\n\
-@del InteractiveMusicBank3\\*.wav /Q\n\
-@exit /b 66";
+const char OGGEncBatchScript[] = "@echo off\n\
+for %%%%f in (InteractiveMusicBank0/*.wav) do (\n\
+scripts\\XNFSInstallerTools\\oggenc2.exe -q %.2f \"InteractiveMusicBank0/%%%%f\"\n\
+del InteractiveMusicBank0\\%%%%f /Q)\n\
+for %%%%f in (InteractiveMusicBank1/*.wav) do (\n\
+scripts\\XNFSInstallerTools\\oggenc2.exe -q %.2f \"InteractiveMusicBank1/%%%%f\"\n\
+del InteractiveMusicBank1\\%%%%f /Q)\n\
+for %%%%f in (InteractiveMusicBank2/*.wav) do (\n\
+scripts\\XNFSInstallerTools\\oggenc2.exe -q %.2f \"InteractiveMusicBank2/%%%%f\"\n\
+del InteractiveMusicBank2\\%%%%f /Q)\n\
+for %%%%f in (InteractiveMusicBank3/*.wav) do (\n\
+scripts\\XNFSInstallerTools\\oggenc2.exe -q %.2f \"InteractiveMusicBank3/%%%%f\"\n\
+del InteractiveMusicBank3\\%%%%f /Q)\n\
+exit /b 68";
 
 char* FilenameFormat;
 char TempBuffer[1024];
@@ -328,33 +333,12 @@ void __declspec(naked) ReturnValueCave()
 	case STATEMANAGER_INFO2:
 		StateManager = STATEMANAGER_EXTRACT;
 		break;
-	/*case STATEMANAGER_EXTRACT:
-		if (bExtractFinished)
-		{
-			if (bUseASF)
-				StateManager = STATEMANAGER_NODEINFO;
-			else
-				StateManager = STATEMANAGER_DECODE;
-		}
-		break;*/
-	/*case STATEMANAGER_DECODE:
-		HandleButtonPressedASFCleanup();
-		break;*/
 	case STATEMANAGER_ASFCLEANUP:
 		if (bUseOGGenc)
 			StateManager = STATEMANAGER_OGGENCODE;
 		else
 			StateManager = STATEMANAGER_NODEINFO;
 		break;
-	/*case STATEMANAGER_INFO3:
-		if (bUseOGGenc)
-			StateManager = STATEMANAGER_OGGENCODE;
-		else
-			StateManager = STATEMANAGER_NODEINFO;
-		break;*/
-	/*case STATEMANAGER_OGGENCODE:
-		HandleButtonPressedWAVCleanup();
-		break;*/
 	case STATEMANAGER_WAVCLEANUP:
 		StateManager = STATEMANAGER_NODEINFO;
 		break;
@@ -381,27 +365,7 @@ DWORD WINAPI InstallerStateManager(LPVOID)
 			StateManagerStatus = STATEMANAGER_INTRO;
 			bDialogShownAtLeastOnce = 1;
 		}
-		if (SystemReturnValue == 69)
-		{
-			if (bNoClean)
-				if (bUseOGGenc)
-					StateManager = STATEMANAGER_OGGENCODE;
-				else
-					StateManager = STATEMANAGER_NODEINFO;
-			else
-				StateManager = STATEMANAGER_ASFCLEANUP;
-			SystemReturnValue = 0;
-		}
-		if (SystemReturnValue == 68)
-		{
-			if (bNoClean)
-				StateManager = STATEMANAGER_NODEINFO;
-			else
-				StateManager = STATEMANAGER_WAVCLEANUP;
-
-			SystemReturnValue = 0;
-		}
-		if (SystemReturnValue == 67)
+		if (SystemReturnValue == 69) // after SX
 		{
 			if (bUseOGGenc)
 				StateManager = STATEMANAGER_OGGENCODE;
@@ -409,7 +373,7 @@ DWORD WINAPI InstallerStateManager(LPVOID)
 				StateManager = STATEMANAGER_NODEINFO;
 			SystemReturnValue = 0;
 		}
-		if (SystemReturnValue == 66)
+		if (SystemReturnValue == 68) // after OGGEnc2
 		{
 			StateManager = STATEMANAGER_NODEINFO;
 			SystemReturnValue = 0;
@@ -430,7 +394,6 @@ DWORD WINAPI InstallerStateManager(LPVOID)
 
 		if (bDialogShownAtLeastOnce && *(int*)THEGAMEFLOWMANAGER_ADDRESS == 3)
 		{
-			//printf("DI: StateManager: %d\n", StateManager);
 			switch (StateManager)
 			{
 			case STATEMANAGER_INTERACTIVEQ:
@@ -489,11 +452,6 @@ DWORD WINAPI InstallerStateManager(LPVOID)
 					fclose(fin);
 				}
 				bExtractFinished = 1;
-				//if (bUseASF)
-				//	FEDialogScreen_ShowDialog(ASFEXTRACTSUCCESS1, CONTSTR, NULL, NULL);
-				//else
-				//	FEDialogScreen_ShowDialog(ASFEXTRACTSUCCESS2, CONTSTR, NULL, NULL);
-
 				break;
 			case STATEMANAGER_DECODE:
 				if (bInteractiveMusicFolderExists)
@@ -512,22 +470,6 @@ DWORD WINAPI InstallerStateManager(LPVOID)
 					StateManagerStatus = STATEMANAGER_DECODE;
 				}
 				break;
-			case STATEMANAGER_ASFCLEANUP:
-				FEDialogScreen_ShowDialog(ASFCLEANUPMESSAGE, 0, 0, 0);
-				batchfileout = fopen("XNFSTempBatch3.bat", "w");
-				fwrite(ASFCleanupScript, strlen(ASFCleanupScript), 1, batchfileout);
-				fclose(batchfileout);
-				SystemReturnValue = system("XNFSTempBatch3.bat");
-				remove("XNFSTempBatch3.bat");
-				StateManagerStatus = STATEMANAGER_ASFCLEANUP;
-				break;
-			/*case STATEMANAGER_INFO3:
-				if (bUseOGGenc)
-					FEDialogScreen_ShowDialog(ASFNOTCLEANINGUPMSG1, ENCSTR, 0, 0);
-				else
-					FEDialogScreen_ShowDialog(ASFNOTCLEANINGUPMSG2, GENSTR, 0, 0);
-				StateManagerStatus = STATEMANAGER_INFO3;
-				break;*/
 			case STATEMANAGER_OGGENCODE:
 				if (bUseOGGenc)
 				{
@@ -542,19 +484,6 @@ DWORD WINAPI InstallerStateManager(LPVOID)
 					remove("XNFSTempBatch2.bat");
 				}
 				break;
-			case STATEMANAGER_WAVCLEANUP:
-				FEDialogScreen_ShowDialog(WAVCLEANUPMESSAGE, 0, 0, 0);
-				batchfileout = fopen("XNFSTempBatch4.bat", "w");
-				fwrite(WAVCleanupScript, strlen(WAVCleanupScript), 1, batchfileout);
-				fclose(batchfileout);
-				SystemReturnValue = system("XNFSTempBatch4.bat");
-				remove("XNFSTempBatch4.bat");
-				StateManagerStatus = STATEMANAGER_WAVCLEANUP;
-				break;
-			/*case STATEMANAGER_INFO4:
-				FEDialogScreen_ShowDialog(WAVNOTCLEANINGUPMSG, GENSTR, 0, 0);
-				StateManagerStatus = STATEMANAGER_INFO4;
-				break;*/
 			case STATEMANAGER_NODEINFO:
 				FEDialogScreen_ShowDialog(NODEGENMSGFMT, NULL, NULL, NULL);
 				for (unsigned int i = 0; i <= 3; i++)
@@ -628,10 +557,7 @@ bool separate_console(void)
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 
 	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
-	{
-		//printf("GetConsoleScreenBufferInfo failed: %lu\n", GetLastError());
 		return FALSE;
-	}
 
 	// if cursor position is (0,0) then we were launched in a separate console
 	return ((!csbi.dwCursorPosition.X) && (!csbi.dwCursorPosition.Y));

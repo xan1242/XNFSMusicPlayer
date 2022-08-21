@@ -146,7 +146,6 @@ int SearchPathByNodeID(unsigned int ID)
 		if (ID == node[BankNumber][i].PathfinderID)
 		{
 			file = node[BankNumber][i].FilePath;
-			SetCurrentPlayingFileType(node[BankNumber][i].FileType);
 			XNFS_printf(2, "%s: Found and set file %s to %X\n", PRINT_TYPE_INFO, file, node[BankNumber][i].PathfinderID);
 			XNFS_printf(2, "%s: Type: %s\n", PRINT_TYPE_INFO, FormatTypeStrings[node[BankNumber][i].FileType]);
 			FoundIDNum = i;

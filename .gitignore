@@ -375,3 +375,5 @@ FodyWeavers.xsd
 /BASS
 /BASSFLAC
 /BASSMIDI
+/XNFSMusicPlayer/Release-Carbon
+/XNFSMusicPlayer/Debug-Carbon

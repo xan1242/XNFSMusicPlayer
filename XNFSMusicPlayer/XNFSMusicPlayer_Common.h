@@ -571,7 +571,7 @@ int BASSTimeRemaining()
 	if (bInteractiveMode)
 		remaining = BASS_StreamPutData(music, NULL, 0) /*- BASS_ChannelGetPosition(music, BASS_POS_BYTE)*/;
 	else
-			remaining = BASS_ChannelGetLength(music, BASS_POS_BYTE) - BASS_ChannelGetPosition(music, BASS_POS_BYTE);
+		remaining = BASS_ChannelGetLength(music, BASS_POS_BYTE) - BASS_ChannelGetPosition(music, BASS_POS_BYTE);
 
 	if (!remaining)
 		return 0;
