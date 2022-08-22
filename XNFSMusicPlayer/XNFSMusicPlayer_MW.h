@@ -419,10 +419,10 @@ int InjectCode()
 		injector::MakeNOP(VOLCRITICALDISABLE2_ADDRESS, 5, true);
 	}
 
-	injector::MakeCALL(QUEUENODECAVE_ADDRESS, QueueNodeInterceptor, true);
+	//injector::MakeCALL(QUEUENODECAVE_ADDRESS, QueueNodeInterceptor, true);
 
-	injector::MakeCALL(PATHFINDERCONSTRUCTOR_ADDRESS, BASSCreate, true);
-	injector::MakeCALL(PATHFINDERDESTRUCTOR_ADDRESS, BASSDestroy, true);
+	//injector::MakeCALL(PATHFINDERCONSTRUCTOR_ADDRESS, BASSCreate, true);
+	//injector::MakeCALL(PATHFINDERDESTRUCTOR_ADDRESS, BASSDestroy, true);
 
 	injector::MakeJMP(0x00462ACF, vsprintfdamnit, true);
 

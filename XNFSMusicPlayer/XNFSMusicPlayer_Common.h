@@ -96,6 +96,47 @@ TrackStruct *track, *overrides;
 
 char* SF2filename;
 
+// Multi-threaded message queue
+#define BASS_MSGBUFFER_SIZE 16
+struct BASSThreadMessage
+{
+	bool complete = true;
+	DWORD handle;
+	DWORD command;
+	DWORD param1;
+	DWORD param2;
+}bassmsg[BASS_MSGBUFFER_SIZE]; // message buffer
+
+void XNFS_BASS_PushMessage(BASSThreadMessage *msg)
+{
+	for (int i = 0; i < BASS_MSGBUFFER_SIZE; i++)
+	{
+		// find the first free slot
+		if (bassmsg[i].complete)
+		{
+			bassmsg[i].handle = (*msg).handle;
+			bassmsg[i].command = (*msg).command;
+			bassmsg[i].param1 = (*msg).param1;
+			bassmsg[i].param2 = (*msg).param2;
+			bassmsg[i].complete = false;
+			break;
+		}
+	}
+	XNFS_printf(2, "WARNING: Ran out of queue slots for message 0x%X\n...", (*msg).command);
+}
+
+void XNFS_BASS_PopMessage(BASSThreadMessage *msg)
+{
+	switch ((*msg).command)
+	{
+		// add command types here
+	default:
+		break;
+	}
+
+	(*msg).complete = true;
+}
+
 unsigned int QueueNodeInterceptor(void* PATHTRACK)
 {
 	if (bInteractiveMode)
@@ -257,41 +298,6 @@ unsigned int CheckIfSupportedFile(const char* filename)
 	}
 	return FILE_TYPE_UNKNOWN;
 }
-
-/*int SetCurrentPlayingFileType(unsigned int FileType)
-{
-	switch (FileType)
-	{
-	case FILE_TYPE_TRACKER:
-		CurrentPlayingFileType = FILE_TYPE_TRACKER;
-		break;
-#ifdef BASS_USE_FLAC
-	case FILE_TYPE_FLAC:
-		CurrentPlayingFileType = FILE_TYPE_FLAC;
-		break;
-#endif
-	case FILE_TYPE_STREAM:
-		CurrentPlayingFileType = FILE_TYPE_STREAM;
-		break;
-	case FILE_TYPE_ONLINESTREAM:
-		CurrentPlayingFileType = FILE_TYPE_ONLINESTREAM;
-		break;
-/*#ifdef BASS_USE_VGMSTREAM
-	case FILE_TYPE_VGMSTREAM:
-		CurrentPlayingFileType = FILE_TYPE_VGMSTREAM;
-		break;
-#endif*/
-/*#ifdef BASS_USE_MIDI
-	case FILE_TYPE_MIDI:
-		CurrentPlayingFileType = FILE_TYPE_MIDI;
-		break;
-#endif
-
-	default:
-		CurrentPlayingFileType = FILE_TYPE_UNKNOWN;
-	}
-	return 0;
-}*/
 
 int SearchPathByID(unsigned int ID) // needs abstraction
 {
@@ -724,7 +730,7 @@ void __declspec(naked) BASSVolumeCave()
 
 int BASSDestroy()
 {
-	_asm call somefunction2
+	//_asm call somefunction2
 	XNFS_printf(2, "%s: BASSDestroy()\n", PRINT_TYPE_INFO);
 	if (!BASS_Free())
 		XNFS_printf(1, "%s: Error during BASS_Free in BASSDestroy: BASS Error: %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());
@@ -745,12 +751,12 @@ int BASSDestroy()
 
 int BASSCreate()
 {
-	unsigned int somefunctionreturn = 0;
-	_asm
-	{
-		call somefunction
-		mov somefunctionreturn, eax
-	}
+	//unsigned int somefunctionreturn = 0;
+	//_asm
+	//{
+	//	call somefunction
+	//	mov somefunctionreturn, eax
+	//}
 	XNFS_printf(2, "%s: BASSCreate()\n", PRINT_TYPE_INFO);
 	if (!bBASSCreated)
 	{
@@ -805,7 +811,9 @@ int BASSCreate()
 	if (!bInstallerComplete && bInstallerMusic)
 		PlayInstallerMusic();
 
-	return somefunctionreturn;
+	return 0;
+
+//	return somefunctionreturn;
 }
 
 int GenerateEventIDForOnlineStream(unsigned int TrackNumber, const char* URL)
@@ -1129,25 +1137,28 @@ void M3UPathCheck(const char* M3UFile, const char* InPath, char* OutPath)
 	strcpy(OutPath, StringToCopy);
 }
 
-// this hack is necessary to prevent bass.dll from hanging during BASS_Init when reading tags...
-// for some reason the callback that sets a handle number from 0xFFFFFFFF never gets written during this stage.
-// this did not happen in the older versions of BASS so I have no clue what's going on
-// NOTE: this was written during BASS version 2.4.16.7 - I'd LOVE to use pattern detection here but it simply doesn't work currently
-// To actually fix this, I'll need help from the author of BASS himself (Ian Luck) because this is a doozy
-// (or better yet - I've written a RIFF/ID3 tag reader of my own instead of relying on BASS to handle this task)
-// 
-// Currently this hack is in standby mode here as a last resort. All BASS tag readers are disabled. (sadly we lose tracker title reads but OH WELL)
-// 
-//void BASSInitHack(bool bUndo)
-//{
-//	if (bUndo)
-//	{
-//		injector::WriteMemory<unsigned char>(((unsigned int)(&BASS_Init) - 0x666A), 0x74, true);
-//		injector::WriteMemory<unsigned char>(((unsigned int)(&BASS_Init) - 0x6669), 0xEF, true);
-//	}
-//	else
-//		injector::MakeNOP(((unsigned int)(&BASS_Init) - 0x666A), 2, true);
-//}
+void XNFS_BASS_ProcessThreadMessages()
+{
+	for (int i = 0; i < BASS_MSGBUFFER_SIZE; i++)
+	{
+		if (!bassmsg[i].complete)
+		{
+			XNFS_BASS_PopMessage(&(bassmsg[i]));
+		}
+	}
+}
+
+DWORD WINAPI XNFS_BASS_MessageThread()
+{
+	// init BASS in this thread
+	BASSCreate();
+
+	while (1)
+	{
+		XNFS_BASS_ProcessThreadMessages();
+	}
+	return 0;
+}
 
 int InitConfig()
 {
@@ -1208,17 +1219,12 @@ int InitConfig()
 
 		XNFS_printf(1, "%s: Processing playlist\n", PRINT_TYPE_INFO);
 
-		// for tag reading...
-		//BASSInitHack(false);
-
 		if (CheckIfFileExists(0, PlaylistFile))
 			DoFilePathsStruct(PlaylistFile);
 		else
 			SetNoTracksWarning();
 
 		AppendOverridesAndFree(TrackCount);
-
-		//BASSInitHack(true);
 	}
 	else
 	{
@@ -1230,5 +1236,9 @@ int InitConfig()
 	if (!bUseGameThread)
 		CreateThread(0, 0, (LPTHREAD_START_ROUTINE)&TrackSwitchHotkeyThread, NULL, 0, NULL);
 
+	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)&XNFS_BASS_MessageThread, NULL, 0, NULL);
+
 	return 1;
 }
+
+
