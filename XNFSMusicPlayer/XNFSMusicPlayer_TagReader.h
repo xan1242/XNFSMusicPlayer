@@ -23,6 +23,8 @@ void ReadFilenameAsTrackName(const char* FilePath, int TrackNumber, JukeboxTrack
 	memset(JukeStuff, 0, 255);
 
 	pch1 = strrchr(FilePath, '\\');
+	if (pch1 == NULL)
+		pch1 = strrchr(FilePath, '/');
 	pch2 = strrchr(FilePath, '.');
 
 	if (pch1 == NULL)
@@ -42,6 +44,8 @@ void ReadLastFolderAsAlbum(const char* FilePath, int TrackNumber, JukeboxTrack* 
 	const char *pch3;
 
 	pch1 = strrchr(FilePath, '\\');
+	if (pch1 == NULL)
+		pch1 = strrchr(FilePath, '/');
 	pch2 = strrchr(FilePath, '.');
 
 	memset(JukeStuff, 0, 255);
@@ -53,6 +57,8 @@ void ReadLastFolderAsAlbum(const char* FilePath, int TrackNumber, JukeboxTrack* 
 		memset(Buffer2, 0, 255);
 		strncpy(Buffer2, FilePath, pch1 - FilePath);
 		pch3 = strrchr(Buffer2, '\\');
+		if (pch3 == NULL)
+			pch3 = strrchr(Buffer2, '/');
 		if (pch3 == NULL)
 		{
 			strncpy(JukeStuff, FilePath, pch1 - FilePath);

@@ -19,7 +19,7 @@
 
 // TODO - implement proper versioning
 #define BUILD_VER_MAJOR 1
-#define BUILD_VER_MINOR 11
+#define BUILD_VER_MINOR 12
 
 #define FILE_TYPE_TRACKER 1
 #define FILE_TYPE_STREAM 2
