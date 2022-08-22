@@ -273,7 +273,8 @@ int DoFileNodePathsStruct(const char* TxtFile)
 	fin = fopen(TxtFile, "r");
 	if (fin == NULL)
 	{
-		perror(PRINT_TYPE_ERROR);
+		if (bConsoleExists)
+			perror(PRINT_TYPE_ERROR);
 		return(-1);
 	}
 	while (!feof(fin))	// FIXME: Make less hacky code.
@@ -451,7 +452,8 @@ int DoFilePathsStruct(char* TxtFile)
 
 	if (fin == NULL)
 	{
-		perror(PRINT_TYPE_ERROR);
+		if (bConsoleExists)
+			perror(PRINT_TYPE_ERROR);
 		return -1;
 	}
 

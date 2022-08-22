@@ -89,7 +89,8 @@ bool ReadEATraxTags_RIFFInfo(const char* FilePath, int TrackNumber, JukeboxTrack
 	}
 	if (fin == NULL)
 	{
-		perror(PRINT_TYPE_ERROR);
+		if (bConsoleExists)
+			perror(PRINT_TYPE_ERROR);
 		XNFS_printf(1, "%s: Couldn't open %s\n", PRINT_TYPE_ERROR, PathBuffer);
 		return 0;
 	}
@@ -333,7 +334,8 @@ bool ReadEATraxTags_OGG(const char* FilePath, int TrackNumber, JukeboxTrack* EAT
 	FILE *fin = fopen(FilePath, "rb");
 	if (fin == NULL)
 	{
-		perror(PRINT_TYPE_ERROR);
+		if (bConsoleExists)
+			perror(PRINT_TYPE_ERROR);
 		return 0;
 	}
 	fseek(fin, 0x1A, SEEK_SET);
@@ -369,7 +371,8 @@ bool ReadEATraxTags_FLAC(const char* FilePath, int TrackNumber, JukeboxTrack* EA
 
 	if (fin == NULL)
 	{
-		perror(PRINT_TYPE_ERROR);
+		if (bConsoleExists)
+			perror(PRINT_TYPE_ERROR);
 		return 0;
 	}
 
@@ -524,7 +527,8 @@ bool ReadEATraxTags_ID3v2(const char* FilePath, int TrackNumber, JukeboxTrack* E
 	}
 	if (fin == NULL)
 	{
-		perror(PRINT_TYPE_ERROR);
+		if (bConsoleExists)
+			perror(PRINT_TYPE_ERROR);
 		XNFS_printf(1, "%s: Couldn't open %s\n", PRINT_TYPE_ERROR, PathBuffer);
 		return 0;
 	}

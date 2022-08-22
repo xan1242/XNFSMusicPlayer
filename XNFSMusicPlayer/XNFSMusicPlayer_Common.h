@@ -128,7 +128,8 @@ void LoadFileInBuffer(void* Buffer, const char* FilePath, unsigned int FileSize)
 	}
 	if (fin == NULL)
 	{
-		perror(PRINT_TYPE_ERROR);
+		if (bConsoleExists)
+			perror(PRINT_TYPE_ERROR);
 		XNFS_printf(1, "%s: Couldn't open %s\n", PRINT_TYPE_ERROR, PathBuffer);
 		return;
 	}
@@ -151,7 +152,8 @@ unsigned int GetFileSizeFromPath(const char* FilePath)
 		stat_ret = stat(PathBuffer, &filesizer);
 		if (stat_ret < 0)
 		{
-			perror(PRINT_TYPE_ERROR);
+			if (bConsoleExists)
+				perror(PRINT_TYPE_ERROR);
 			XNFS_printf(1, "%s: Couldn't open %s\n", PRINT_TYPE_ERROR, PathBuffer);
 			return 0;
 		}
@@ -842,7 +844,8 @@ bool CheckIfFileExists(bool bSilent, const char* FileName)
 	}
 	if (bSilent == 0)
 	{
-		perror(PRINT_TYPE_ERROR);
+		if (bConsoleExists)
+			perror(PRINT_TYPE_ERROR);
 		XNFS_printf(1, "%s: File %s does not exist.\n", PRINT_TYPE_WARNING, FileName);
 	}
 	return 0;
@@ -1012,7 +1015,8 @@ int DoFileOverrides(const char* TxtFile)
 	fin = fopen(TxtFile, "r");
 	if (fin == NULL)
 	{
-		perror(PRINT_TYPE_ERROR);
+		if (bConsoleExists)
+			perror(PRINT_TYPE_ERROR);
 		return(-1);
 	}
 

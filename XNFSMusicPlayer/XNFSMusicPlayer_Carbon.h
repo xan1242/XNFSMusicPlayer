@@ -495,7 +495,8 @@ int DoFilePathsStruct(char* TxtFile)
 
 	if (fin == NULL)
 	{
-		perror(PRINT_TYPE_ERROR);
+		if (bConsoleExists)
+			perror(PRINT_TYPE_ERROR);
 		return -1;
 	}
 
@@ -734,7 +735,8 @@ int DoFileNodePathsStruct(const char* TxtFile, int BankNumberToProcess)
 	if (fin == NULL)
 	{
 		XNFS_printf(1, "%s: File %s can't be opened for node paths!\n", PRINT_TYPE_ERROR, TxtFile);
-		perror(PRINT_TYPE_ERROR);
+		if (bConsoleExists)
+			perror(PRINT_TYPE_ERROR);
 		return(-1);
 	}
 	while (!feof(fin))	// FIXME: Make less hacky code.

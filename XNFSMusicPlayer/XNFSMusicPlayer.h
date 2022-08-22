@@ -206,7 +206,8 @@ int __stdcall XNFS_printf(unsigned int Level, const char* Format, ...)
 			{
 				if (bLogFileCreated)
 					bLogFileCreated = false;
-				perror(PRINT_TYPE_ERROR);
+				if (bConsoleExists)
+					perror(PRINT_TYPE_ERROR);
 				__crt_va_end(ArgList);
 				return Result;
 			}
