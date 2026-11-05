@@ -400,6 +400,7 @@
     <ClInclude Include="..\stdafx.h" />
     <ClInclude Include="..\targetver.h" />
     <ClInclude Include="Carbon_MusicAddresses.h" />
+    <ClInclude Include="CarbonPlaybackFilter.h" />
     <ClInclude Include="MW_MusicAddresses.h" />
     <ClInclude Include="XNFSMusicPlayer.h" />
     <ClInclude Include="XNFSMusicPlayer_Carbon.h" />
