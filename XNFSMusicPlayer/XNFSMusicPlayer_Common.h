@@ -28,6 +28,10 @@ unsigned int SNDSYS_leavecritical = SNDSYSLEAVECRITICAL_ADDRESS;
 unsigned int PATH_clearallevents = CLEARALLEVENTS_ADDRESS;
 unsigned int SFXObj_PFEATrax_NotifyChyron = SFXOBJNOTIFYCHYRON_ADDRESS;
 
+#ifdef GAME_CARBON
+bool bCarbonPlaylistSilent = false;
+bool FilterCarbonPlaylistEvent();
+#endif
 bool bBASSCreated = 0;
 //bool bBASSMIDIFontsLoaded = 0;
 bool bPlayedAtLeastOnce = 0;
@@ -568,6 +572,10 @@ int CreateBASSHandleByFileType(int FileType, char* FilePath, DWORD &hHandle)
 
 int BASSTimeRemaining()
 {
+#ifdef GAME_CARBON
+    // Do not let the scheduler spin or consult stale handles while muted.
+    if (bCarbonPlaylistSilent && !bInteractiveMode) return 1000;
+#endif
 	QWORD remaining = 0;
 	float time;
 	if (bInteractiveMode)
@@ -674,6 +682,9 @@ int BASSPlayChannel(int something1, unsigned int something2, int something3, int
 		if (!BASS_ChannelRemoveSync(music, MetaSync))
 			XNFS_printf(1, "%s: Can't remove sync (handle: music, sync: MetaSync): BASS Error: %d\n", PRINT_TYPE_ERROR, BASS_ErrorGetCode());
 	MetaSync = 0;
+#ifdef GAME_CARBON
+    if (!FilterCarbonPlaylistEvent()) return PlayCounter;
+#endif
 	SearchPathByID(MusicID);
 	CreateBASSHandleByFileType(track[FoundIDNum].FileType, file, music);
 	if (bGameVolumeControl)

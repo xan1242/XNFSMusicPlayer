@@ -3,6 +3,7 @@
 #pragma once
 #include "XNFSMusicPlayer.h"
 #include "XNFSMusicPlayer_Common.h"
+#include "CarbonPlaybackFilter.h"
 
 int(__thiscall *EAXSound_Random)(void* EAXSound, int range) = (int(__thiscall*)(void*, int))EAXSOUND_RANDOM_ADDRESS;
 unsigned int(__cdecl *bGetTicker)() = (unsigned int(__cdecl*)())BGETTICKER_ADDRESS;
@@ -42,6 +43,19 @@ unsigned int BankNumber, StolenEBX;
 unsigned int loc_8CE4A6 = CRAPFIX_1_EXIT;
 
 bool* TrackEnables;
+unsigned char* TrackPlaybackModes;
+unsigned char LastStablePlaybackContext = CarbonFE;
+unsigned int CurrentFilteredTrack = CarbonNoTrack;
+
+unsigned char GetCarbonPlaybackContext()
+{
+    const unsigned int state = *(unsigned int*)THEGAMEFLOWMANAGER_ADDRESS;
+    // Carbon game_flow::state: frontend=3, racing/free roam=6.
+    // Keep the last stable context during loading and unloading.
+    if (state == 3) LastStablePlaybackContext = CarbonFE;
+    else if (state == 6) LastStablePlaybackContext = CarbonIG;
+    return LastStablePlaybackContext;
+}
 bool bSequencedPlayback;
 bool bDisableInteractive_FE, bExitedTitleScreen;
 bool bDisableInteractive_Crew;
@@ -125,6 +139,8 @@ void AllocateMemoryForTracks(unsigned int TrackCount)
 		EATrax = (JukeboxTrack*)calloc(TrackCount, (sizeof(JukeboxTrack))); // reusing from MW
 		SongAttribs = (SongAttrib*)calloc(TrackCount, (sizeof(SongAttrib)));
 		TrackEnables = (bool*)calloc(TrackCount, sizeof(bool));
+        TrackPlaybackModes = (unsigned char*)calloc(TrackCount, sizeof(unsigned char));
+        memset(TrackPlaybackModes, CarbonAll, TrackCount);
 		memset(TrackEnables, true, sizeof(bool) * TrackCount);
 	}
 	else
@@ -133,6 +149,8 @@ void AllocateMemoryForTracks(unsigned int TrackCount)
 		EATrax = (JukeboxTrack*)calloc(1, (sizeof(JukeboxTrack)));
 		SongAttribs = (SongAttrib*)calloc(1, (sizeof(SongAttrib)));
 		TrackEnables = (bool*)calloc(1, sizeof(bool));
+        TrackPlaybackModes = (unsigned char*)calloc(1, sizeof(unsigned char));
+        TrackPlaybackModes[0] = CarbonAll;
 		TrackEnables[0] = true;
 	}
 }
@@ -316,71 +334,72 @@ void __declspec(naked) DALOptions_EATraxPreviewHook(int tracknum)
 	}
 }
 
-bool CheckIfAllTracksDisabled()
+void SilenceCarbonPlaylist()
 {
-	for (unsigned int i = 0; i < TrackCount; i++)
-	{
-		if (TrackEnables[i])
-			return false;
-	}
-	return true;
+    if (!bCarbonPlaylistSilent)
+        XNFS_printf(1, "%s: No enabled playlist tracks for %s; playlist muted\n",
+            PRINT_TYPE_WARNING, GetCarbonPlaybackContext() == CarbonFE ? "FE" : "IG");
+    StopBassChannel();
+    bCarbonPlaylistSilent = true;
+    CurrentFilteredTrack = CarbonNoTrack;
 }
 
 void* __stdcall GiveRandomTrack()
 {
-	if (CheckIfAllTracksDisabled()) // sanity check before entering an infinite loop
-		return GetTrackAttribPointer(0);
-	
-	unsigned int SelectedTrackIndex = 0;
-
-	//*(unsigned int*)SOUNDRANDOMSEED_ADDRESS = bGetTicker();
-
-	if (!bSequencedPlayback)
-		srand(bGetTicker());
-		
-
-	while (true)
-	{
-		if (bSequencedPlayback)
-		{
-			TrackSequencer %= TrackCount;
-			SelectedTrackIndex = TrackSequencer;
-			TrackSequencer++;
-		}
-		else
-			SelectedTrackIndex = rand() % TrackCount;
-			//SelectedTrackIndex = EAXSound_Random(*(void**)EAXSOUND_GLOBAL_POINTER, TrackCount); // not using EAXSound's RNG, since it's very "sticky"
-		
-		if (TrackEnables[SelectedTrackIndex])
-			break;
-	}
-
-	return GetTrackAttribPointer(SelectedTrackIndex);
+    const unsigned char context = GetCarbonPlaybackContext();
+    if (!bSequencedPlayback) srand(bGetTicker());
+    const unsigned int index = SelectCarbonTrack(TrackEnables, TrackPlaybackModes,
+        TrackCount, context, bSequencedPlayback, TrackSequencer);
+    if (index == CarbonNoTrack)
+    {
+        SilenceCarbonPlaylist();
+        return NULL;
+    }
+    bCarbonPlaylistSilent = false;
+    return GetTrackAttribPointer(index);
 }
 
-//unsigned int RandomTrackInjectExit1 = RANDOMTRACKINNJECT_EXIT1_ADDRESS;
+// Explicit EventIDs (including EA Trax preview) must obey the same filter.
+// Overrides and interactive music are outside the custom playlist filter.
+bool FilterCarbonPlaylistEvent()
+{
+    const unsigned char context = GetCarbonPlaybackContext();
+    for (unsigned int i = 0; i < TrackCount; ++i)
+    {
+        if ((MusicID & 0xFFFFFF) != (track[i].PathfinderID & 0xFFFFFF)) continue;
+        unsigned int selected = i;
+        if (!CarbonTrackAllowed(TrackEnables[i], TrackPlaybackModes[i], context))
+        {
+            SongAttrib* replacement = (SongAttrib*)GiveRandomTrack();
+            if (!replacement) return false;
+            MusicID = replacement->EventID & 0xFFFFFF;
+            for (selected = 0; selected < TrackCount; ++selected)
+                if ((track[selected].PathfinderID & 0xFFFFFF) == MusicID) break;
+        }
+        CurrentFilteredTrack = selected;
+        bCarbonPlaylistSilent = false;
+        return true;
+    }
+    CurrentFilteredTrack = CarbonNoTrack;
+    bCarbonPlaylistSilent = false;
+    return true;
+}
+
 unsigned int RandomTrackInjectExit2 = RANDOMTRACKINNJECT_EXIT2_ADDRESS;
-//unsigned int StartLicensedMusicFunc = STARTLICENSEDMUSIC_ADDRESS;
 void __declspec(naked) RandomTrackInject()
 {
 	_asm
 	{
 		call GiveRandomTrack
+        test eax, eax
+        jz noEligibleTrack
 		mov edx, eax
 		mov ebp, [edx+0x20]
 		mov ecx, esi
 		push ebp
-		call StartLicensedMusic // RECURSION!!!
-		/*mov eax, [esi+0x25C]
-		lea ecx, [eax+eax*2]
-		mov eax, ds:EATRAX_SFXOBJ_ADDRESS[ecx*8]
-		or edi, 0xFFFFFFFF
-		mov byte ptr[esp + 0x3C], 0*/
-		/*cmp eax, edi
-		jnz thyexit1
-		jmp RandomTrackInjectExit2
-
-	thyexit1:*/
+		call StartLicensedMusic
+    noEligibleTrack:
+        or edi, 0xFFFFFFFF
 		jmp RandomTrackInjectExit2
 	}
 }
@@ -690,10 +709,15 @@ int DoFilePathsStruct(char* TxtFile)
 				EATrax[i].EventID &= 0xFFFFFF;
 				EATrax[i].EventID += 0x01000000;
 
-				// Read tags
-				//EATrax[i].PlaybackMode = (char*)malloc(0x3);
-				//EATrax[i].PlaybackMode = inireader.ReadString(IniReaderSectionID, "PlaybackMode", "AL");
-				TrackEnables[i] = inireader.ReadInteger(IniReaderSectionID, "TrackEnabled", true);
+                // Missing modes preserve the original all-context playback.
+                char* modeText = inireader.ReadString(IniReaderSectionID, "PlaybackMode", "AL");
+                bool modeValid;
+                TrackPlaybackModes[i] = ParseCarbonPlaybackMode(modeText, modeValid);
+                if (!modeValid)
+                    XNFS_printf(1, "%s: Invalid PlaybackMode for %s; using AL\n",
+                        PRINT_TYPE_WARNING, IniReaderSectionID);
+                delete[] modeText;
+                TrackEnables[i] = inireader.ReadInteger(IniReaderSectionID, "TrackEnabled", true);
 
 
 				// Carbon-specific BS
@@ -816,6 +840,17 @@ int DoFileNodePathsStruct(const char* TxtFile, int BankNumberToProcess)
 
 int HotkeyUpdate()
 {
+    static unsigned char previousContext = CarbonFE;
+    const unsigned char context = GetCarbonPlaybackContext();
+    const bool changed = context != previousContext;
+    previousContext = context;
+    if (changed && Current_SFXObj_PFEATrax && bInstallerComplete && !bInteractiveMode)
+    {
+        if (bCarbonPlaylistSilent || (CurrentFilteredTrack < TrackCount &&
+            !CarbonTrackAllowed(TrackEnables[CurrentFilteredTrack],
+                TrackPlaybackModes[CurrentFilteredTrack], context)))
+            StartLicensedMusic(Current_SFXObj_PFEATrax, 0);
+    }
 	if ((*(unsigned int*)THEGAMEFLOWMANAGER_ADDRESS == 3) || (*(unsigned int*)THEGAMEFLOWMANAGER_ADDRESS == 6))
 	{
 		if (Current_SFXObj_PFEATrax && !bInteractiveMode && !*(bool*)SOUNDLOSTWINFOCUS_ADDRESS & bInstallerComplete)
