@@ -70,7 +70,16 @@ Settings include:
 - Playback mode
 - Tracker amplification level
 
-To create an entry, simply go to the EA Trax settings in the game, and change the playback mode (All, Ingame, Menu). (press left/right)
+To create a track entry, open EA Trax and press left or right on the desired track. In Most Wanted this changes the playback mode. In Carbon it toggles `TrackEnabled`.
+
+In Carbon, set `PlaybackMode` under the track ID in `PlaylistConfig.ini` and restart the game.
+
+- `FE`: frontend menus
+- `IG`: gameplay, including races and free roam
+- `AL`: both contexts (default)
+- `OF`: neither context
+
+`TrackEnabled=0` excludes a track in either context. If the current context has no eligible tracks, the custom EA Trax playlist stays silent. Interactive music and EventID overrides are configured separately.
 
 The track's ID will be appended to the file.
 
@@ -111,7 +120,6 @@ In this file you can define which EventID is tied to which file precisely, so if
 ## TODO list:
 
 - add NFSC chyron handling and calling
-- add NFSC music playback types like MW - IG, FE, AL, OF (instead of just on/off)
 - Unicode
 - installer direct process calling instead of batch scripting - this will allow for percentage overview in the dialog boxes
 - sflist support
